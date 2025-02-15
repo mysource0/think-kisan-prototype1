@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensor Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+  <!-- Header Section -->
+  <header class="header">
+    <div class="header-content">
+      <h1 class="title">Sensor Dashboard</h1>
+      <div class="search-container">
+        <button class="search-toggle">
+          <i class="fas fa-search"></i>
+        </button>
+        <div class="search-controls hidden">
+          <div class="search-options">
+            <label>
+              <input type="radio" name="search-type" value="name"> Name
+            </label>
+            <label>
+              <input type="radio" name="search-type" value="doc_id" checked> doc id
+            </label>
+            <label>
+              <input type="radio" name="search-type" value="location"> Location
+            </label>
+          </div>
+          <input type="text" class="search-input hidden" placeholder="Enter document ID...">
+          <button class="hidden btn search_button" onclick="searchDocumentById()">Search</button>
+        
+      </div>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <ul class="nav-list">
+      <li> <button class="nav_buttons" id="home_button" onclick="displayLastRecentData()"> <a href="#"><i class="fas fa-home"></i> Home </a></button></li>
+      <li> <button class="nav_buttons" id="database_opereation_button" onclick="display_db_reading_operations()"><a href="#"><i class="fas fa-database"></i> Records History</a></button></li>
+      <li> <button class="nav_buttons" id="realtime_data_button"><a href="#"><i class="fas fa-chart-bar"></i> Real-Time Data</a></button></li>
+    <!---   <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li> --> 
+    </ul>
+  </nav>
+  
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!--Reat time updated data-->
+  <!---  <section class="data-card realtime"> 
+      <h2><i class="fas fa-clock"></i> Real-Time Data</h2>
+      <div class="card-content" id="realtime_data_update">
+        <p>Waiting for sensor data...</p>
+      </div>
+    </section> -------->
+
+
+
+
+
+
+<!--- for searched output-->
+<section class="data-card updated" style="display: none;" id="search_results_section">
+  <h2><i class="fas fa-search"></i> Searched Results  </h2>
+  <div class="card-content">
+    <div id="search_results">
+  </div>
+</section>
+
+<!-- last recent updaetd data-->
+<section class="data-card updated" id="last_recent_updated_section">
+    <h2><i class="fas fa-history"></i> Last Updated</h2>
+    <div class="card-content">
+      <div id="lastRecentOutput">Loading...</div>
+    </div>
+</section>
+
+
+  
+  <!--Range of data-->
+    <section class="data-card range" id="range_data_operations"> 
+
+      <!--data range data function-->
+
+
+        <section id="date_range_data_section">
+            <h2><i class="fas fa-chart-line"></i> Data Range</h2>
+            <div class="card-content">
+                  <div class="date-range">
+                    <table>
+                      <tr><label><td>From date : </td><td><input type="datetime-local" id="startDate" placeholder="from date"></td></label> <br></tr>
+                      <tr><label><td>To date : </td><td><input type="datetime-local" id="endDate" placeholder="to date"></td></label></tr>
+                  </table>
+                  </div>
+                 <p class="dateRange"> <button class="btn primary" id="last_date_data_button" onclick="fetchRangeData()">Fetch Range Data</button></p>
+                  <div id="last_date_range_data"></div>     
+            </div>
+            <br><hr>
+        </section>
+
+        <!--N - Range of data-->
+        <br>
+        <section id="last_n_range_data_section">
+          <h2><i class="fas fa-list"></i> Last N Records</h2>
+          <div class="card-content">
+              <div class="n-records-container">
+                 <table> 
+                  <tr><td><input type="number" id="nRecordsInput" class ="dateInput" placeholder="Enter number of records"></td>
+                 <td> <button class="btn secondary" id="last_n_range_data_button"  onclick="fetchLastNRangeData()">Last N Records</button></td></tr>
+                </table>
+              </div>
+              <div id="last_n_range_data"></div>
+          </div>
+          <br>
+      </section>
+      
+
+        <!--Range of data-->
+        <section id="same_name_based_data">
+
+        </section>
+
+        <!--Range of data-->
+        <section id="same_location_based_data">
+
+        </section>
+        <br>
+<!---complete database-->
+        <section class="complete_db">
+          <button class="btn" id="entire_db_button" onclick="getSensorData()">Show Entire Data In DataBase</button>
+          <div class="card-content">
+            <div id="complete_database_data"></div>     
+          </div>
+        </section>
+    </section>
+  </main>
+
+
+
+
+
+
+
+
+
+  <!-- FAB -->
+  <div class="fab-container">
+    <button class="fab-main">
+      <i class="fas fa-plus"></i>
+    </button>
+    <div class="fab-options hidden">
+      <button class="fab-option"><i class="fas fa-rss"></i> Add Sensor</button>
+      <button class="fab-option"><i class="fas fa-download"></i> Export Data</button>
+      <button class="fab-option"><i class="fas fa-bell"></i> Alerts</button>
+    </div>
+  </div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchToggle = document.querySelector('.search-toggle');
+  const title = document.querySelector('.title');
+  const searchControls = document.querySelector('.search-controls');
+  const fabMain = document.querySelector('.fab-main');
+  const fabOptions = document.querySelector('.fab-options');
+
+  // Search toggle
+  searchToggle.addEventListener('click', () => {
+    title.classList.toggle('hidden');
+    searchControls.classList.toggle('active');
+  });
+
+  // FAB toggle
+  fabMain.addEventListener('click', () => {
+    fabOptions.classList.toggle('active');
+  });
+
+  // Close on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) {
+      title.classList.remove('hidden');
+      searchControls.classList.remove('active');
+    }
+    if (!e.target.closest('.fab-container')) {
+      fabOptions.classList.remove('active');
+    }
+  });
+});
+</script>
+<script type="module" src="script.js"></script>
+</body>
+</html>
