@@ -1,3 +1,5 @@
+<!---https://mysource0.github.io/think-kisan-prototype1/-->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,7 +71,13 @@
   </div>
 </section>
 
+<!-------------creating document feed back-->
+<section id="doc_updated_feedback">
+  <div class="data-card" id="doc_update_results"></div>
+</section>
 <!-- last recent updaetd data-->
+
+
 <section class="data-card updated" id="last_recent_updated_section">
     <h2><i class="fas fa-history"></i> Last Updated</h2>
     <div class="card-content">
@@ -151,12 +159,106 @@
       <i class="fas fa-plus"></i>
     </button>
     <div class="fab-options hidden">
-      <button class="fab-option"><i class="fas fa-rss"></i> Add Sensor</button>
-      <button class="fab-option"><i class="fas fa-download"></i> Export Data</button>
-      <button class="fab-option"><i class="fas fa-bell"></i> Alerts</button>
+      <button class="fab-option plus_options" onclick="create_report()"><i class="fas fa-rss"></i> Create Report</button>
+      <button id="showFormBtn" onclick="toggleForm()" class="fab-option plus_options"><i class="fas fa-download"></i> Create Manual Report</button>
+      <button class="fab-option plus_options"><i class="fas fa-download"></i> Export Data</button>
+      <button class="fab-option plus_options"><i class="fas fa-bell"></i> Alerts</button>
     </div>
   </div>
+  <!-- Hidden Create Report Container -->
+  <div id="create_report_container" style="display:none; border: 1px solid #ccc; padding: 15px; margin: 15px 0; border-radius: 5px;">
+    <h3>Create Report</h3>
+    <table style="width:100%; border-collapse:collapse;">
+      <tr>
+        <td style="padding:8px; text-align:right; vertical-align:middle;"><strong>Start Date:</strong></td>
+        <td style="padding:8px;"><input type="datetime-local" id="reportStartDate" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right; vertical-align:middle;"><strong>End Date:</strong></td>
+        <td style="padding:8px;"><input type="datetime-local" id="reportEndDate" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right; vertical-align:middle;"><strong>Document Name:</strong></td>
+        <td style="padding:8px;"><input type="text" id="reportDocName" placeholder="Enter report doc ID" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right; vertical-align:middle;"><strong>Location:</strong></td>
+        <td style="padding:8px;"><input type="text" id="reportLocation" placeholder="Enter location" style="width:100%;"></td>
+      </tr>
+    </table>
+    <br>
+      <!-- Button to toggle the new document form -->
+   
 
+  </div>
+
+
+
+
+
+<!-- Container for the new document input form -->
+<div id="inputFormContainer" style="display: none; margin-top: 15px;">
+  <div class="data-card">
+    <h3>Create New Sensor Data Document</h3>
+    <table style="width:100%; border-collapse:collapse;">
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Document Name:</strong></td>
+        <td style="padding:8px;"><input type="text" id="document_name" placeholder="Enter document ID" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Location:</strong></td>
+        <td style="padding:8px;"><input type="text" id="location" placeholder="Enter location" style="width:100%;"></td>
+      </tr>
+      <!-- Additional rows for moisture, temperature, etc. -->
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Moisture:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="moisture" placeholder="Enter moisture" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Temperature:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="temperature" placeholder="Enter temperature" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>pH:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="pH" placeholder="Enter pH" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Nitrogen:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="nitrogen" placeholder="Enter nitrogen" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Phosphorus:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="phosphorus" placeholder="Enter phosphorus" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Potassium:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="potassium" placeholder="Enter potassium" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Electrical Conductivity:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="electricalConductivity" placeholder="Enter electrical conductivity" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>RSSI:</strong></td>
+        <td style="padding:8px;"><input type="number" step="any" id="rssi" placeholder="Enter RSSI" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Timestamp:</strong></td>
+        <td style="padding:8px;"><input type="datetime-local" id="timestamp" style="width:100%;"></td>
+      </tr>
+      <tr>
+        <td style="padding:8px; text-align:right;"><strong>Remark:</strong></td>
+        <td style="padding:8px;"><input type="text" id="remark" placeholder="Enter remark" style="width:100%;"></td>
+      </tr>
+    </table>
+    <br>
+    <button class="btn primary" id="submitButton" onclick="createNewDocument()">Submit Document</button>
+  </div>
+</div>
+
+<!-- Feedback container -->
+<div  class="data-card" id="creationFeedback"></div>
+  
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
