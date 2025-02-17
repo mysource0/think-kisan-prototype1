@@ -8,6 +8,8 @@
   <title>Sensor Dashboard</title>
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
   <!-- Header Section -->
@@ -42,6 +44,7 @@
     <ul class="nav-list">
       <li> <button class="nav_buttons" id="home_button" onclick="displayLastRecentData()"> <a href="#"><i class="fas fa-home"></i> Home </a></button></li>
       <li> <button class="nav_buttons" id="database_opereation_button" onclick="display_db_reading_operations()"><a href="#"><i class="fas fa-database"></i> Records History</a></button></li>
+      <li> <button class="nav_buttons" id="exportDataBtn" onclick="showpdfgenerator()"><a href="#"><i class="fas fa-download"></i> Download PDF</a></button></li>
       <li> <button class="nav_buttons" id="realtime_data_button"><a href="#"><i class="fas fa-chart-bar"></i> Real-Time Data</a></button></li>
     <!---   <li><a href="#"><i class="fas fa-cog"></i> Settings</a></li> --> 
     </ul>
@@ -116,7 +119,7 @@
               <div class="n-records-container">
                  <table> 
                   <tr><td><input type="number" id="nRecordsInput" class ="dateInput" placeholder="Enter number of records"></td>
-                 <td> <button class="btn secondary" id="last_n_range_data_button"  onclick="fetchLastNRangeData()">Last N Records</button></td></tr>
+                 <td> <button class="btn secondary" id="last_n_range_data_button"  onclick="fetchLastNRangeData()">Data Range</button></td></tr>
                 </table>
               </div>
               <div id="last_n_range_data"></div>
@@ -161,7 +164,8 @@
     <div class="fab-options hidden">
       <button class="fab-option plus_options" onclick="create_report()"><i class="fas fa-rss"></i> Create Report</button>
       <button id="showFormBtn" onclick="toggleForm()" class="fab-option plus_options"><i class="fas fa-download"></i> Create Manual Report</button>
-      <button class="fab-option plus_options"><i class="fas fa-download"></i> Export Data</button>
+      
+      
       <button class="fab-option plus_options"><i class="fas fa-bell"></i> Alerts</button>
     </div>
   </div>
@@ -188,13 +192,123 @@
     </table>
     <br>
       <!-- Button to toggle the new document form -->
-   
+      <button class="btn primary" onclick="submitReport()">Submit Report</button>
 
   </div>
 
 
+<!-- Export Modal Section -->
+<!-- Export Modal Section -->
+<section id="pdfgeneratingsection" style="display: none;">
+<div id="exportModal" class="data-card updated">
+  <div class="card-content" style=" border: 1px solid #ccc; padding: 15px; margin: 15px 0; border-radius: 5px;">
+    <h2>Export Data Options</h2>
+    <form id="exportForm">
+      <!-- Export Type Options -->
+      <fieldset>
+        <legend>Export Type</legend>
+        <div>
+        <p style="text-align: center;">  <label>
+            <input type="radio" name="exportType" value="byId" checked> Download by ID Of the Document
+          </label><br>
+          <label>
+            <input type="radio" name="exportType" value="lastN"> Download Last N Records Average
+          </label><br>
+          <label>
+            <input type="radio" name="exportType" value="dateRange"> Download Average in Date Range
+          </label><br><hr><br>
+        </div> </p>
+        <div id="exportInputs" style="margin-top: 10px;">
+          <!-- Dynamic inputs inserted here -->
+        </div>
+      </fieldset>
+      <!-- Report Header Details (Using Table) -->
+      <fieldset style="margin-top: 20px;">
+        <legend>Report Header Details</legend>
+        <table style="width:100%; border-collapse: collapse;">
+          <tr>
+            <td style="padding: 5px;"><label for="headerName">Name:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerName" name="headerName" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerNumber">Number:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerNumber" name="headerNumber" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerLocation">Location:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerLocation" name="headerLocation" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerMandal">Mandal:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerMandal" name="headerMandal" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerSoilType">Soil Type:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerSoilType" name="headerSoilType" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerState">State:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerState" name="headerState" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerSoilDensity">Soil Density:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerSoilDensity" name="headerSoilDensity" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerDateTested">Date Tested:</label></td>
+            <td style="padding: 5px;"><input type="date" id="headerDateTested" name="headerDateTested" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerReportGenerated">Report Generated On:</label></td>
+            <td style="padding: 5px;"><input type="datetime-local" id="headerReportGenerated" name="headerReportGenerated" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerCropType">Crop Type:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerCropType" name="headerCropType" required style="width:100%;"></td>
+          </tr>
+          <tr>
+            <td style="padding: 5px;"><label for="headerEquipment">Equipment Used:</label></td>
+            <td style="padding: 5px;"><input type="text" id="headerEquipment" name="headerEquipment" required style="width:100%;"></td>
+          </tr>
+        </table>
+      </fieldset>
+      <!-- PDF File Name Option -->
+      <fieldset style="margin-top: 20px;">
+        <legend>PDF File Name Option</legend>
+        <div>
+          <label>
+            <input type="radio" name="pdfNameOption" value="default" checked> Use Default File Name
+          </label>
+          <label>
+            <input type="radio" name="pdfNameOption" value="custom"> Use Custom File Name
+          </label>
+        </div>
+        <div id="customPdfNameContainer" style="margin-top: 10px; display: none;">
+          <label for="customPdfName">PDF File Name:</label>
+          <input type="text" id="customPdfName" name="customPdfName" placeholder="Enter custom PDF file name">
+        </div>
+      </fieldset>
+      <div style="margin-top: 20px;">
+        <button type="button" id="exportBtn">Export PDF</button>
+        <button type="button" id="closeExportModal">Close</button>
+      </div>
+      <div id="exportError" style="color: red; margin-top: 10px;"></div>
+    </form>
+  </div>
+</div>
+
+</section>
 
 
+
+
+
+
+
+
+<!---Manual create section -->
+
+<section id="manual_data_create">
 
 <!-- Container for the new document input form -->
 <div id="inputFormContainer" style="display: none; margin-top: 15px;">
@@ -258,7 +372,19 @@
 
 <!-- Feedback container -->
 <div  class="data-card" id="creationFeedback"></div>
-  
+</section>  
+
+
+
+
+
+
+
+
+
+
+
+
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
