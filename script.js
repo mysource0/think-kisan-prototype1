@@ -1,12 +1,12 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, getDoc, collection, getDocs, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 
 // nav buttons
 
 // let nav_last_recent_button = document.getElementById("last_recent_updated_section");
-// let nav_search_operation_button = document.getElementById("search_results_section");
+//let nav_search_operation_button = document.getElementById("search_results_section");
 // let nav_database_reading_operations_button = document.getElementById("range_data_operations");
 
 // nav_last_recent_button.style.display="block";
@@ -46,7 +46,6 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 
 
 
@@ -165,9 +164,9 @@ async function displayLastRecentData() {
               <td style="padding: 8px;">Doc ID (Epoch)</td>
               <td style="padding: 8px;">${lastDoc.id}</td>
             </tr>
-            <tr>
-              <td style="padding: 8px;">Local Time</td>
-              <td style="padding: 8px;">${localTime}</td>
+             <tr>
+              <td style="padding: 8px;">Timestamp </td>
+              <td style="padding: 8px;">${data.Timestamp}</td>
             </tr>
             <tr>
               <td style="padding: 8px;">Moisture</td>
@@ -201,10 +200,7 @@ async function displayLastRecentData() {
               <td style="padding: 8px;">RSSI</td>
               <td style="padding: 8px;">${data.RSSI}</td>
             </tr>
-            <tr>
-              <td style="padding: 8px;">Timestamp Field</td>
-              <td style="padding: 8px;">${data.Timestamp}</td>
-            </tr>
+
           </tbody>
         </table>
       `;
@@ -386,8 +382,7 @@ const search_results_section = document.getElementById("search_results_section")
 
 // Assume db is already initialized
 async function searchDocumentById() {
-
-  search_results_section.style.display="block";
+  search_results_section.style.display = "block";
   // Get the selected radio button
   const selectedRadio = document.querySelector('input[name="search-type"]:checked');
   if (!selectedRadio) {
@@ -407,9 +402,9 @@ async function searchDocumentById() {
     }
 
     try {
-      // Create a reference to the document in "SensorData" with the given ID
-      const docRef = doc(db, "SensorData", searchTerm);
-      const docSnap = await getDoc(docRef);
+      // Use docRef instead of doc
+      const documentRef = docRef(db, "SensorData", searchTerm);
+      const docSnap = await getDoc(documentRef);
       let html = "";
       
       if (!docSnap.exists()) {
@@ -425,35 +420,40 @@ async function searchDocumentById() {
                     </tr>
                   </thead>
                   <tbody>`;
-        for (const key in data) {
-          if (data.hasOwnProperty(key)) {
-            html += `<tr>
-                      <td style="padding:8px; border:1px solid #ddd; font-weight:bold;">${key}</td>
-                      <td style="padding:8px; border:1px solid #ddd;">${data[key]}</td>
-                    </tr>`;
-          }
+
+for (const key in data) {
+  if (!data.hasOwnProperty(key)) continue;
+  if (key === "SourceDocIDs") continue; // Skip the SourceDocIDs field
+  html += `<tr>
+            <td style="padding:8px; border:1px solid #ddd; font-weight:bold;">${key}</td>
+            <td style="padding:8px; border:1px solid #ddd;">${data[key]}</td>
+          </tr>`;
+}
+
+
         }
         html += `</tbody></table>`;
-      }
       document.getElementById("search_results").innerHTML = html;
     } catch (error) {
       console.error("Error searching document by ID:", error);
       document.getElementById("search_results").innerText = "Data not found.";
     }
   } else {
-    // For other search types, notify the user that only document ID search is currently supported.
+    // For other search types, notify the user that only document ID search is supported.
     document.getElementById("search_results").innerHTML =
       "This search function currently supports document ID search only.";
   }
 }
 
-// Expose the function to the global scope
 window.searchDocumentById = searchDocumentById;
 
+const doc_updated_feedback_block = document.getElementById("doc_updated_feedback");
+doc_updated_feedback_block.style.display = "none"; ///// document create feed back
 
 document.addEventListener('DOMContentLoaded', () => {
   const range_operations_nav = document.getElementById("range_data_operations");
   const last_recent_updated_section = document.getElementById("last_recent_updated_section");
+
 
   // Set initial visibility
   range_operations_nav.style.display = "none";
@@ -461,22 +461,262 @@ document.addEventListener('DOMContentLoaded', () => {
  
 
   window.display_db_reading_operations = function display_db_reading_operations() {
+    last_recent_updated_section.style.display = "none";
+    search_results_section.style.display = "none";
+    document.getElementById("create_report_container").style.display = "none";
+    doc_updated_feedback_block.style.display="none";
+    document.getElementById("creationFeedback").style.display = "none";
+    document.getElementById("inputFormContainer").style.display="none";
     // Use getComputedStyle if needed:
     if (window.getComputedStyle(range_operations_nav).display === "none") {
       range_operations_nav.style.display = "block";
-      last_recent_updated_section.style.display = "none";
-      search_results_section.style.display = "block";
     }
   };
 
   window.displayLastRecentData = function displayLastRecentData(){
+    search_results_section.style.display = "none";
+    range_operations_nav.style.display = "none";
+    doc_updated_feedback_block.style.display="none";
+    document.getElementById("creationFeedback").style.display = "none";
+    document.getElementById("inputFormContainer").style.display="none";
+
+    document.getElementById("create_report_container").style.display = "none";
+    search_results_section.style.display = "none";
     if(window.getComputedStyle(last_recent_updated_section).display === "none"){
-      range_operations_nav.style.display = "none";
       last_recent_updated_section.style.display = "block";
-      search_results_section.style.display = "none";
     }
   };
 
 
   // Now you can call display_db_reading_operations() via a button click or other event.
 });
+
+
+
+
+
+
+
+
+// Toggle display of the create report container
+function create_report() {
+  document.getElementById("last_recent_updated_section").style.display="none";
+  
+  const container = document.getElementById("create_report_container");
+  // Toggle visibility
+  if (container.style.display === "none" || container.style.display === "") {
+    container.style.display = "block";
+    document.getElementById("range_data_operations").style.display="none";
+
+  } else {
+    container.style.display = "none";
+  }
+}
+window.create_report = create_report;
+
+// Function to submit the report
+// Wait until the DOM is fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+
+  // Function to submit the report
+  async function submitReport() {
+    // Get input values
+    const startDate = document.getElementById("reportStartDate").value;
+    const endDate = document.getElementById("reportEndDate").value;
+    const reportDocName = document.getElementById("reportDocName").value.trim();
+    const location = document.getElementById("reportLocation").value.trim();
+
+    // Use the feedback element
+    doc_updated_feedback_block.style.display = "block"
+    const feedbackEl = document.getElementById("doc_update_results");
+
+    if (!startDate || !endDate || !reportDocName || !location) {
+      feedbackEl.innerHTML = "Please fill in all fields.";
+      return;
+    }
+
+    // Convert the date inputs to epoch (seconds)
+    const startEpoch = Math.floor(new Date(startDate).getTime() / 1000);
+    const endEpoch = Math.floor(new Date(endDate).getTime() / 1000);
+
+    try {
+      // Query the SensorData collection for documents in the given date range
+      const querySnapshot = await getDocs(collection(db, "SensorData"));
+      const filteredDocs = [];
+      querySnapshot.forEach(doc => {
+        const docEpoch = parseInt(doc.id, 10);
+        if (!isNaN(docEpoch) && docEpoch >= startEpoch && docEpoch <= endEpoch) {
+          filteredDocs.push({ id: doc.id, data: doc.data() });
+        }
+      });
+
+      if (filteredDocs.length === 0) {
+        feedbackEl.textContent = "No sensor data found in the selected range.";
+        return;
+      }
+
+      // Initialize sums for each numeric field (assume these fields are numbers)
+      let sumMoisture = 0, sumTemperature = 0, sumPH = 0, sumNitrogen = 0, sumPhosphorus = 0, sumPotassium = 0, sumEC = 0, sumRSSI = 0;
+      let count = 0;
+      const sourceDocIDs = [];
+
+      filteredDocs.forEach(rec => {
+        const d = rec.data;
+        sumMoisture += Number(d.Moisture) || 0;
+        sumTemperature += Number(d.Temperature) || 0;
+        sumPH += Number(d.pH) || 0;
+        sumNitrogen += Number(d.Nitrogen) || 0;
+        sumPhosphorus += Number(d.Phosphorus) || 0;
+        sumPotassium += Number(d.Potassium) || 0;
+        sumEC += Number(d.Electrical_Conductivity) || 0;
+        sumRSSI += Number(d.RSSI) || 0;
+        count++;
+        sourceDocIDs.push(rec.id);
+      });
+
+      // Calculate averages
+      const avgMoisture = (sumMoisture / count).toFixed(2);
+      const avgTemperature = (sumTemperature / count).toFixed(2);
+      const avgPH = (sumPH / count).toFixed(2);
+      const avgNitrogen = (sumNitrogen / count).toFixed(2);
+      const avgPhosphorus = (sumPhosphorus / count).toFixed(2);
+      const avgPotassium = (sumPotassium / count).toFixed(2);
+      const avgEC = (sumEC / count).toFixed(2);
+      const avgRSSI = (sumRSSI / count).toFixed(2);
+
+      // Build the report data object (excluding Timestamp and doc id as per requirements)
+      const reportData = {
+        Moisture: avgMoisture,
+        Temperature: avgTemperature,
+        pH: avgPH,
+        Nitrogen: avgNitrogen,
+        Phosphorus: avgPhosphorus,
+        Potassium: avgPotassium,
+        Electrical_Conductivity: avgEC,
+        RSSI: avgRSSI,
+        Location: location,
+        SourceDocIDs: sourceDocIDs,
+        ReportCreatedAt: new Date().toISOString(),
+        ReportStartDate: startDate,
+        ReportEndDate: endDate
+      };
+
+      // Create a new document in the "Reports" collection using the provided reportDocName
+      await setDoc(docRef(db, "Reports", reportDocName), reportData);
+
+      feedbackEl.textContent = "Report created successfully!";
+      // Optionally, hide the container or clear inputs
+      document.getElementById("create_report_container").style.display = "none";
+    } catch (error) {
+      console.error("Error creating report:", error);
+      feedbackEl.textContent = "Error creating report. Please try again.";
+    }
+  }
+
+  // Expose the function to the global scope
+  window.submitReport = submitReport;
+});
+
+
+
+// Toggle the visibility of the input form
+function toggleForm() {
+  const formContainer = document.getElementById("inputFormContainer");
+
+  if (!formContainer) {
+    console.error("Form container not found.");
+    return;
+  }
+
+  if (formContainer.style.display === "none" || formContainer.style.display === "") {
+    formContainer.style.display = "block";
+    hideSections([
+      "last_recent_updated_section",
+      "range_data_operations",
+      "create_report_container",
+      "search_results_section"
+    ]);
+  } else {
+    formContainer.style.display = "none";
+  }
+}
+window.toggleForm = toggleForm;
+
+// Utility function to hide multiple sections
+function hideSections(sectionIds) {
+  sectionIds.forEach(id => {
+    const section = document.getElementById(id);
+    if (section) section.style.display = "none";
+  });
+}
+
+
+
+// Function to create a new document in Firestore
+async function createNewDocument() {
+  const feedbackEl = document.getElementById("creationFeedback");
+  const submitButton = document.getElementById("submitButton");
+
+  if (!feedbackEl || !submitButton) {
+    console.error("Missing required elements: creationFeedback or submitButton.");
+    return;
+  }
+
+  submitButton.disabled = true;
+  feedbackEl.textContent = "";
+
+  // Retrieve input values
+  const getInputValue = (id) => {
+    const element = document.getElementById(id);
+    return element ? element.value.trim() : null;
+  };
+
+  const document_name = getInputValue("document_name");
+  const location_name = getInputValue("location");
+  const moisture = parseFloat(getInputValue("moisture"));
+  const temperature = parseFloat(getInputValue("temperature"));
+  const pH = parseFloat(getInputValue("pH"));
+  const nitrogen = parseFloat(getInputValue("nitrogen"));
+  const phosphorus = parseFloat(getInputValue("phosphorus"));
+  const potassium = parseFloat(getInputValue("potassium"));
+  const electricalConductivity = parseFloat(getInputValue("electricalConductivity"));
+  const rssi = parseFloat(getInputValue("rssi"));
+  const timestamp = getInputValue("timestamp");
+  const remark = getInputValue("remark");
+
+  if (!document_name || isNaN(moisture) || isNaN(temperature) || isNaN(pH) ||
+      isNaN(nitrogen) || isNaN(phosphorus) || isNaN(potassium) ||
+      isNaN(electricalConductivity) || isNaN(rssi) || !timestamp) {
+    feedbackEl.textContent = "Please fill in all required fields correctly.";
+    submitButton.disabled = false;
+    return;
+  }
+
+  const docData = {
+    Document_Name: document_name,
+    Location_Data: location_name || "Unknown",
+    Moisture: moisture,
+    Temperature: temperature,
+    pH: pH,
+    Nitrogen: nitrogen,
+    Phosphorus: phosphorus,
+    Potassium: potassium,
+    Electrical_Conductivity: electricalConductivity,
+    RSSI: rssi,
+    Timestamp: timestamp,
+    Remark: remark || "No remarks"
+  };
+
+  try {
+    // Use docRef (the alias) to create a reference
+    await setDoc(docRef(db, "SensorData", document_name), docData);
+    feedbackEl.textContent = "Document created successfully!";
+    document.getElementById("inputFormContainer").style.display = "none";
+  } catch (error) {
+    console.error("Error creating document:", error);
+    feedbackEl.textContent = "Error creating document. Please try again.";
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+window.createNewDocument = createNewDocument;
