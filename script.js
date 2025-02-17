@@ -1,6 +1,6 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 
 // nav buttons
@@ -28,8 +28,16 @@ import { getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from
 //     nav_search_operation_button.style.display="none";
 //   }
 // }
-
-
+document.addEventListener("DOMContentLoaded", function () {
+  window.showpdfgenerator = function () {
+    if(document.getElementById("pdfgeneratingsection").style.display == "none"){
+      document.getElementById("pdfgeneratingsection").style.display = "block";
+      document.getElementById("last_recent_updated_section").style.display = "none";
+      document.getElementById("range_data_operations").style.display = "none";
+    }
+    
+  };
+});
 
 
 // Firebase configuration (replace with your actual config)
@@ -46,6 +54,7 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
 
 
 
@@ -479,7 +488,7 @@ document.addEventListener('DOMContentLoaded', () => {
     doc_updated_feedback_block.style.display="none";
     document.getElementById("creationFeedback").style.display = "none";
     document.getElementById("inputFormContainer").style.display="none";
-
+   
     document.getElementById("create_report_container").style.display = "none";
     search_results_section.style.display = "none";
     if(window.getComputedStyle(last_recent_updated_section).display === "none"){
@@ -501,12 +510,12 @@ document.addEventListener('DOMContentLoaded', () => {
 // Toggle display of the create report container
 function create_report() {
   document.getElementById("last_recent_updated_section").style.display="none";
-  
   const container = document.getElementById("create_report_container");
   // Toggle visibility
   if (container.style.display === "none" || container.style.display === "") {
     container.style.display = "block";
     document.getElementById("range_data_operations").style.display="none";
+    
 
   } else {
     container.style.display = "none";
@@ -720,3 +729,673 @@ async function createNewDocument() {
   }
 }
 window.createNewDocument = createNewDocument;
+
+
+
+
+
+///// pdf download
+
+document.addEventListener('DOMContentLoaded', () => {
+  // References to modal elements
+  const exportModal = document.getElementById('exportModal');
+  const exportForm = document.getElementById('exportForm');
+  const exportInputs = document.getElementById('exportInputs');
+  const exportBtn = document.getElementById('exportBtn');
+  const closeExportModal = document.getElementById('closeExportModal');
+  const exportError = document.getElementById('exportError');
+  
+  // PDF file name option handling
+  const customPdfNameContainer = document.getElementById('customPdfNameContainer');
+  const pdfNameOptions = document.querySelectorAll('input[name="pdfNameOption"]');
+  pdfNameOptions.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.value === 'custom' && radio.checked) {
+        customPdfNameContainer.style.display = 'block';
+      } else {
+        customPdfNameContainer.style.display = 'none';
+      }
+    });
+  });
+  
+  // Function to update dynamic export inputs based on the selected export type
+  function updateExportInputs() {
+    const selectedType = document.querySelector('input[name="exportType"]:checked').value;
+    exportInputs.innerHTML = ''; // Clear previous inputs
+    if (selectedType === 'byId') {
+      exportInputs.innerHTML = `
+        <div>
+          <label for="exportDocId">Document ID:</label>
+          <input type="text" id="exportDocId" name="exportDocId" placeholder="Enter Document ID">
+        </div>
+      `;
+    } else if (selectedType === 'lastN') {
+      exportInputs.innerHTML = `
+        <div>
+          <label for="exportLastN">Number of Records (N):</label>
+          <input type="number" id="exportLastN" name="exportLastN" placeholder="Enter number of records" min="1">
+        </div>
+      `;
+    } else if (selectedType === 'dateRange') {
+      exportInputs.innerHTML = `
+        <div>
+          <label for="exportStartDate">Start Date & Time:</label>
+          <input type="datetime-local" id="exportStartDate" name="exportStartDate">
+        </div>
+        <div>
+          <label for="exportEndDate">End Date & Time:</label>
+          <input type="datetime-local" id="exportEndDate" name="exportEndDate">
+        </div>
+      `;
+    }
+  }
+  
+  // Listen for changes in export type selection
+  const exportTypeRadios = document.querySelectorAll('input[name="exportType"]');
+  exportTypeRadios.forEach(radio => {
+    radio.addEventListener('change', updateExportInputs);
+  });
+  updateExportInputs(); // initialize with default selection
+  
+  // Sensor elements order with corresponding labels and units (excluding Timestamp)
+  const sensorElements = [
+    { key: 'Moisture', label: 'Moisture', unit: '%' },
+    { key: 'Temperature', label: 'Temperature', unit: '°C' },
+    { key: 'pH', label: 'pH', unit: '' },
+    { key: 'Nitrogen', label: 'Nitrogen (N)', unit: 'kg/ha' },
+    { key: 'Phosphorus', label: 'Phosphorus (P)', unit: 'kg/ha' },
+    { key: 'Potassium', label: 'Potassium (K)', unit: 'kg/ha' },
+    { key: 'Electrical_Conductivity', label: 'Electrical Conductivity (EC)', unit: 'dS/m' },
+    { key: 'RSSI', label: 'RSSI', unit: 'dBm' }
+  ];
+  
+  // Function to generate the PDF
+  async function generatePDF() {
+    exportError.textContent = ''; // Clear previous errors
+    
+    // Collect Report Header Details
+    const headerName = document.getElementById('headerName').value.trim();
+    const headerNumber = document.getElementById('headerNumber').value.trim();
+    const headerLocation = document.getElementById('headerLocation').value.trim();
+    const headerMandal = document.getElementById('headerMandal').value.trim();
+    const headerSoilType = document.getElementById('headerSoilType').value.trim();
+    const headerState = document.getElementById('headerState').value.trim();
+    const headerSoilDensity = document.getElementById('headerSoilDensity').value.trim();
+    const headerDateTested = document.getElementById('headerDateTested').value.trim();
+    const headerReportGenerated = document.getElementById('headerReportGenerated').value.trim();
+    const headerCropType = document.getElementById('headerCropType').value.trim();
+    const headerEquipment = document.getElementById('headerEquipment').value.trim();
+    
+    // Validate header details
+    if (!headerName || !headerNumber || !headerLocation || !headerMandal || !headerSoilType ||
+        !headerState || !headerSoilDensity || !headerDateTested || !headerReportGenerated ||
+        !headerCropType || !headerEquipment) {
+      exportError.textContent = 'Please fill in all report header details.';
+      return;
+    }
+    
+    // Determine PDF file name based on radio option
+    const pdfNameOption = document.querySelector('input[name="pdfNameOption"]:checked').value;
+    let pdfFileName = '';
+    if (pdfNameOption === 'default') {
+      pdfFileName = `${headerName}_${headerLocation}_${headerSoilType}.pdf`;
+    } else {
+      pdfFileName = document.getElementById('customPdfName').value.trim();
+      if (!pdfFileName) {
+        exportError.textContent = 'Please enter a custom PDF file name.';
+        return;
+      }
+      // Ensure it ends with .pdf
+      if (!pdfFileName.toLowerCase().endsWith('.pdf')) {
+        pdfFileName += '.pdf';
+      }
+    }
+    
+    // Initialize variables for sensor data table rows
+    let tableRows = [];
+    let tableTitle = '';
+    
+    try {
+      const selectedType = document.querySelector('input[name="exportType"]:checked').value;
+      
+      // Define helper to build table rows from a single sensor data object
+      function buildRowsFromData(dataObj) {
+        const rows = [];
+        sensorElements.forEach(el => {
+          if (dataObj[el.key] !== undefined && dataObj[el.key] !== null) {
+            rows.push([el.label, dataObj[el.key], el.unit]);
+          }
+        });
+        return rows;
+      }
+      
+      if (selectedType === 'byId') {
+        const docId = document.getElementById('exportDocId').value.trim();
+        if (!docId) {
+          exportError.textContent = 'Please enter a Document ID.';
+          return;
+        }
+        const documentReference = docRef(db, "SensorData", docId);
+        const docSnap = await getDoc(documentReference);
+        if (!docSnap.exists()) {
+          exportError.textContent = `No record found with Document ID "${docId}".`;
+          return;
+        }
+        const data = docSnap.data();
+        tableTitle = `Data for Document ID: ${docId}`;
+        tableRows = buildRowsFromData(data);
+      } else if (selectedType === 'lastN') {
+        const nValue = parseInt(document.getElementById('exportLastN').value, 10);
+        if (isNaN(nValue) || nValue <= 0) {
+          exportError.textContent = 'Please enter a valid number for records.';
+          return;
+        }
+        const querySnapshot = await getDocs(collection(db, "SensorData"));
+        let records = [];
+        querySnapshot.forEach(doc => {
+          records.push({ id: doc.id, data: doc.data() });
+        });
+        records.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+        const lastNRecords = records.slice(0, nValue);
+        if (lastNRecords.length === 0) {
+          exportError.textContent = 'No records found.';
+          return;
+        }
+        tableTitle = `Average Data for Last ${nValue} Records`;
+        // Compute averages over the sensor elements
+        let sums = {};
+        let count = 0;
+        lastNRecords.forEach(rec => {
+          count++;
+          sensorElements.forEach(el => {
+            const value = parseFloat(rec.data[el.key]);
+            if (!isNaN(value)) {
+              sums[el.key] = (sums[el.key] || 0) + value;
+            }
+          });
+        });
+        let averages = {};
+        sensorElements.forEach(el => {
+          if (sums[el.key] !== undefined) {
+            averages[el.key] = (sums[el.key] / count).toFixed(2);
+          }
+        });
+        tableRows = buildRowsFromData(averages);
+      } else if (selectedType === 'dateRange') {
+        const startDateStr = document.getElementById('exportStartDate').value;
+        const endDateStr = document.getElementById('exportEndDate').value;
+        if (!startDateStr || !endDateStr) {
+          exportError.textContent = 'Please enter both start and end date/time.';
+          return;
+        }
+        const startEpoch = Math.floor(new Date(startDateStr).getTime() / 1000);
+        const endEpoch = Math.floor(new Date(endDateStr).getTime() / 1000);
+        const querySnapshot = await getDocs(collection(db, "SensorData"));
+        let filteredRecords = [];
+        querySnapshot.forEach(doc => {
+          const docEpoch = parseInt(doc.id, 10);
+          if (!isNaN(docEpoch) && docEpoch >= startEpoch && docEpoch <= endEpoch) {
+            filteredRecords.push({ id: doc.id, data: doc.data() });
+          }
+        });
+        if (filteredRecords.length === 0) {
+          exportError.textContent = 'No records found in the selected date range.';
+          return;
+        }
+        tableTitle = `Average Data from ${new Date(startEpoch * 1000).toLocaleString()} to ${new Date(endEpoch * 1000).toLocaleString()}`;
+        let sums = {};
+        let count = 0;
+        filteredRecords.forEach(rec => {
+          count++;
+          sensorElements.forEach(el => {
+            const value = parseFloat(rec.data[el.key]);
+            if (!isNaN(value)) {
+              sums[el.key] = (sums[el.key] || 0) + value;
+            }
+          });
+        });
+        let averages = {};
+        sensorElements.forEach(el => {
+          if (sums[el.key] !== undefined) {
+            averages[el.key] = (sums[el.key] / count).toFixed(2);
+          }
+        });
+        tableRows = buildRowsFromData(averages);
+      }
+      
+      if (tableRows.length === 0) {
+        exportError.textContent = 'No sensor data available for export.';
+        return;
+      }
+      
+      // Create header details table rows (2 columns per row if possible)
+      const headerDetails = [
+        { label: "Name", value: headerName },
+        { label: "Number", value: headerNumber },
+        { label: "Location", value: headerLocation },
+        { label: "Mandal", value: headerMandal },
+        { label: "Soil Type", value: headerSoilType },
+        { label: "State", value: headerState },
+        { label: "Soil Density", value: headerSoilDensity },
+        { label: "Date Tested", value: headerDateTested },
+        { label: "Report Generated On", value: headerReportGenerated },
+        { label: "Crop Type", value: headerCropType },
+        { label: "Equipment Used", value: headerEquipment }
+      ];
+      let headerRows = [];
+      for (let i = 0; i < headerDetails.length; i += 2) {
+        if (headerDetails[i + 1]) {
+          headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`, `${headerDetails[i + 1].label}: ${headerDetails[i + 1].value}`]);
+        } else {
+          headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`]);
+        }
+      }
+      
+      // Generate PDF with jsPDF and autoTable
+      const { jsPDF } = window.jspdf;
+      const pdfDoc = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      // Add header section – using autoTable for the report details
+      pdfDoc.setFontSize(12);
+      pdfDoc.autoTable({
+        startY: 10,
+        head: [['SOIL HEALTH CARD', '']],
+        body: headerRows,
+        theme: 'plain',
+        styles: { halign: 'left', cellPadding: 2 },
+        headStyles: { fillColor: false, textColor: 0, fontStyle: 'bold' }
+      });
+      
+      // Add sensor data title
+      let finalY = pdfDoc.lastAutoTable.finalY + 10;
+      pdfDoc.setFontSize(14);
+      pdfDoc.text(tableTitle, 10, finalY);
+      
+      // Add sensor data table with three columns
+      pdfDoc.autoTable({
+        startY: finalY + 5,
+        head: [['Element', 'Value', 'unit/measurement']],
+        body: tableRows,
+        theme: 'grid'
+      });
+      
+      // Add footer text
+      const pageHeight = pdfDoc.internal.pageSize.height;
+      pdfDoc.setFontSize(10);
+      pdfDoc.text("visit 'https://mysource0.github.io/think-kisan-prototype1' for more information", 10, pageHeight - 10);
+      
+      // Save the PDF
+      pdfDoc.save(pdfFileName);
+      exportError.style.color = 'green';
+      exportError.textContent = 'PDF exported successfully.';
+    } catch (error) {
+      exportError.style.color = 'red';
+      exportError.textContent = 'Error exporting data. Please try again.';
+    }
+  }
+  
+  // Attach event listener to the Export PDF button
+  exportBtn.addEventListener('click', generatePDF);
+  
+  // Close modal when clicking "Close"
+  closeExportModal.addEventListener('click', () => {
+    exportModal.style.display = 'none';
+    exportError.textContent = '';
+  });
+  
+  // Attach event listener to the FAB Export Data button
+  const exportDataButton = document.getElementById('exportDataBtn');
+  if (exportDataButton) {
+    exportDataButton.addEventListener('click', () => {
+      exportModal.style.display = 'block';
+    });
+  }
+});
+
+
+
+
+
+/////////pdf end 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////////// pdf record to firebase
+
+
+// --- Inside your DOMContentLoaded block or relevant module code ---
+
+// Function to save PDF report details to Firestore
+async function savePdfReportToFirestore(pdfReportData, pdfNameOption, pdfFileName) {
+  try {
+    let pdfDocId = "";
+    if (pdfNameOption === "custom") {
+      // Use the custom file name (remove .pdf extension if present)
+      pdfDocId = pdfFileName.replace(/\.pdf$/i, "");
+    } else {
+      // Generate a random document ID
+      pdfDocId = Math.random().toString(36).substring(2, 11);
+    }
+    // Save the report data in collection "pdfrefort" using setDoc
+    await setDoc(docRef(db, "pdfrefort", pdfDocId), pdfReportData);
+  } catch (err) {
+    // Instead of console or alert, we update our error display element.
+    document.querySelector(".export-error").textContent =
+      "Error saving report to Firestore.";
+  }
+}
+
+// Updated generatePDF function that now also saves report details to Firestore.
+async function generatePDF() {
+  document.querySelector(".export-error").textContent = ""; // Clear previous errors
+  
+  // Collect header details
+  const headerName = document.getElementById("headerName").value.trim();
+  const headerNumber = document.getElementById("headerNumber").value.trim();
+  const headerLocation = document.getElementById("headerLocation").value.trim();
+  const headerMandal = document.getElementById("headerMandal").value.trim();
+  const headerSoilType = document.getElementById("headerSoilType").value.trim();
+  const headerState = document.getElementById("headerState").value.trim();
+  const headerSoilDensity = document.getElementById("headerSoilDensity").value.trim();
+  const headerDateTested = document.getElementById("headerDateTested").value.trim();
+  const headerReportGenerated = document.getElementById("headerReportGenerated").value.trim();
+  const headerCropType = document.getElementById("headerCropType").value.trim();
+  const headerEquipment = document.getElementById("headerEquipment").value.trim();
+  
+  if (
+    !headerName ||
+    !headerNumber ||
+    !headerLocation ||
+    !headerMandal ||
+    !headerSoilType ||
+    !headerState ||
+    !headerSoilDensity ||
+    !headerDateTested ||
+    !headerReportGenerated ||
+    !headerCropType ||
+    !headerEquipment
+  ) {
+    document.querySelector(".export-error").textContent = "Please fill in all report header details.";
+    return;
+  }
+  
+  // Determine PDF file name
+  const pdfNameOption = document.querySelector('input[name="pdfNameOption"]:checked').value;
+  let pdfFileName = "";
+  if (pdfNameOption === "default") {
+    pdfFileName = `${headerName}_${headerLocation}_${headerSoilType}.pdf`;
+  } else {
+    pdfFileName = document.getElementById("customPdfName").value.trim();
+    if (!pdfFileName) {
+      document.querySelector(".export-error").textContent = "Please enter a custom PDF file name.";
+      return;
+    }
+    if (!pdfFileName.toLowerCase().endsWith(".pdf")) {
+      pdfFileName += ".pdf";
+    }
+  }
+  
+  // Prepare sensor data table rows
+  // Sensor elements in the desired order with labels and units
+  const sensorElements = [
+    { key: "Moisture", label: "Moisture", unit: "%" },
+    { key: "Temperature", label: "Temperature", unit: "°C" },
+    { key: "pH", label: "pH", unit: "" },
+    { key: "Nitrogen", label: "Nitrogen (N)", unit: "kg/ha" },
+    { key: "Phosphorus", label: "Phosphorus (P)", unit: "kg/ha" },
+    { key: "Potassium", label: "Potassium (K)", unit: "kg/ha" },
+    { key: "Electrical_Conductivity", label: "Electrical Conductivity (EC)", unit: "dS/m" },
+    { key: "RSSI", label: "RSSI", unit: "dBm" }
+  ];
+  
+  // Helper function to build rows from a data object
+  function buildRowsFromData(dataObj) {
+    const rows = [];
+    sensorElements.forEach(el => {
+      if (dataObj[el.key] !== undefined && dataObj[el.key] !== null) {
+        rows.push([el.label, dataObj[el.key], el.unit]);
+      }
+    });
+    return rows;
+  }
+  
+  // Variables to hold table data and title
+  let tableRows = [];
+  let tableTitle = "";
+  const selectedType = document.querySelector('input[name="exportType"]:checked').value;
+  
+  if (selectedType === "byId") {
+    const docId = document.getElementById("exportDocId").value.trim();
+    if (!docId) {
+      document.querySelector(".export-error").textContent = "Please enter a Document ID.";
+      return;
+    }
+    const documentReference = docRef(db, "SensorData", docId);
+    const docSnap = await getDoc(documentReference);
+    if (!docSnap.exists()) {
+      document.querySelector(".export-error").textContent = `No record found with Document ID "${docId}".`;
+      return;
+    }
+    const data = docSnap.data();
+    tableTitle = `Data for Document ID: ${docId}`;
+    tableRows = buildRowsFromData(data);
+  } else if (selectedType === "lastN") {
+    const nValue = parseInt(document.getElementById("exportLastN").value, 10);
+    if (isNaN(nValue) || nValue <= 0) {
+      document.querySelector(".export-error").textContent = "Please enter a valid number for records.";
+      return;
+    }
+    const querySnapshot = await getDocs(collection(db, "SensorData"));
+    let records = [];
+    querySnapshot.forEach(doc => {
+      records.push({ id: doc.id, data: doc.data() });
+    });
+    records.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+    const lastNRecords = records.slice(0, nValue);
+    if (lastNRecords.length === 0) {
+      document.querySelector(".export-error").textContent = "No records found.";
+      return;
+    }
+    tableTitle = `Average Data for Last ${nValue} Records`;
+    let sums = {};
+    let count = 0;
+    lastNRecords.forEach(rec => {
+      count++;
+      sensorElements.forEach(el => {
+        const value = parseFloat(rec.data[el.key]);
+        if (!isNaN(value)) {
+          sums[el.key] = (sums[el.key] || 0) + value;
+        }
+      });
+    });
+    let averages = {};
+    sensorElements.forEach(el => {
+      if (sums[el.key] !== undefined) {
+        averages[el.key] = (sums[el.key] / count).toFixed(2);
+      }
+    });
+    tableRows = buildRowsFromData(averages);
+  } else if (selectedType === "dateRange") {
+    const startDateStr = document.getElementById("exportStartDate").value;
+    const endDateStr = document.getElementById("exportEndDate").value;
+    if (!startDateStr || !endDateStr) {
+      document.querySelector(".export-error").textContent = "Please enter both start and end date/time.";
+      return;
+    }
+    const startEpoch = Math.floor(new Date(startDateStr).getTime() / 1000);
+    const endEpoch = Math.floor(new Date(endDateStr).getTime() / 1000);
+    const querySnapshot = await getDocs(collection(db, "SensorData"));
+    let filteredRecords = [];
+    querySnapshot.forEach(doc => {
+      const docEpoch = parseInt(doc.id, 10);
+      if (!isNaN(docEpoch) && docEpoch >= startEpoch && docEpoch <= endEpoch) {
+        filteredRecords.push({ id: doc.id, data: doc.data() });
+      }
+    });
+    if (filteredRecords.length === 0) {
+      document.querySelector(".export-error").textContent = "No records found in the selected date range.";
+      return;
+    }
+    tableTitle = `Average Data from ${new Date(startEpoch * 1000).toLocaleString()} to ${new Date(endEpoch * 1000).toLocaleString()}`;
+    let sums = {};
+    let count = 0;
+    filteredRecords.forEach(rec => {
+      count++;
+      sensorElements.forEach(el => {
+        const value = parseFloat(rec.data[el.key]);
+        if (!isNaN(value)) {
+          sums[el.key] = (sums[el.key] || 0) + value;
+        }
+      });
+    });
+    let averages = {};
+    sensorElements.forEach(el => {
+      if (sums[el.key] !== undefined) {
+        averages[el.key] = (sums[el.key] / count).toFixed(2);
+      }
+    });
+    tableRows = buildRowsFromData(averages);
+  }
+  
+  if (tableRows.length === 0) {
+    document.querySelector(".export-error").textContent = "No sensor data available for export.";
+    return;
+  }
+  
+  // Build header details rows for PDF header (2 columns per row if possible)
+  const headerDetails = [
+    { label: "Name", value: headerName },
+    { label: "Number", value: headerNumber },
+    { label: "Location", value: headerLocation },
+    { label: "Mandal", value: headerMandal },
+    { label: "Soil Type", value: headerSoilType },
+    { label: "State", value: headerState },
+    { label: "Soil Density", value: headerSoilDensity },
+    { label: "Date Tested", value: headerDateTested },
+    { label: "Report Generated On", value: headerReportGenerated },
+    { label: "Crop Type", value: headerCropType },
+    { label: "Equipment Used", value: headerEquipment }
+  ];
+  let headerRows = [];
+  for (let i = 0; i < headerDetails.length; i += 2) {
+    if (headerDetails[i + 1]) {
+      headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`, `${headerDetails[i + 1].label}: ${headerDetails[i + 1].value}`]);
+    } else {
+      headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`]);
+    }
+  }
+  
+  // Generate PDF with jsPDF and autoTable
+  const { jsPDF } = window.jspdf;
+  const pdfDoc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4"
+  });
+  
+  // Add header details using autoTable
+  pdfDoc.setFontSize(12);
+  pdfDoc.autoTable({
+    startY: 10,
+    head: [["SOIL HEALTH CARD", ""]],
+    body: headerRows,
+    theme: "plain",
+    styles: { halign: "left", cellPadding: 2 },
+    headStyles: { fillColor: false, textColor: 0, fontStyle: "bold" }
+  });
+  
+  // Add sensor data title
+  let finalY = pdfDoc.lastAutoTable.finalY + 10;
+  pdfDoc.setFontSize(14);
+  pdfDoc.text(tableTitle, 10, finalY);
+  
+  // Add sensor data table with headers: Element, Value, unit/measurement
+  pdfDoc.autoTable({
+    startY: finalY + 5,
+    head: [["Element", "Value", "unit/measurement"]],
+    body: tableRows,
+    theme: "grid"
+  });
+  
+  // Add footer text
+  const pageHeight = pdfDoc.internal.pageSize.height;
+  pdfDoc.setFontSize(10);
+  pdfDoc.text("visit 'https://mysource0.github.io/think-kisan-prototype1' for more information", 10, pageHeight - 10);
+  
+  // Save the PDF
+  pdfDoc.save(pdfFileName);
+  
+  // Prepare data object for Firestore log
+  const pdfReportData = {
+    header: {
+      name: headerName,
+      number: headerNumber,
+      location: headerLocation,
+      mandal: headerMandal,
+      soilType: headerSoilType,
+      state: headerState,
+      soilDensity: headerSoilDensity,
+      dateTested: headerDateTested,
+      reportGeneratedOn: headerReportGenerated,
+      cropType: headerCropType,
+      equipmentUsed: headerEquipment
+    },
+    exportType: selectedType,
+    tableTitle: tableTitle,
+    tableData: tableRows,
+    pdfFileName: pdfFileName,
+    timestamp: new Date().toISOString()
+  };
+  
+  // Save the report details to Firestore
+  await savePdfReportToFirestore(pdfReportData, pdfNameOption, pdfFileName);
+  
+  document.querySelector(".export-error").style.color = "green";
+  document.querySelector(".export-error").textContent = "PDF exported and report logged successfully.";
+}
