@@ -437,3 +437,123 @@
   background-color: #ffffff;
 }
 
+
+
+/* Container for the export section */
+#exportModal {
+  width: 100%;
+  margin: 20px auto;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+/* Card container styling */
+#exportModal .card-content {
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  padding: 15px;
+  margin: 15px 0;
+  background-color: #fff;
+}
+
+/* Heading styles */
+#exportModal h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+}
+
+/* Form styling */
+#exportForm {
+  width: 100%;
+  font-family: Arial, sans-serif;
+}
+
+/* Fieldset & legend styling */
+#exportForm fieldset {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  margin-bottom: 20px;
+}
+#exportForm fieldset legend {
+  font-weight: bold;
+  padding: 0 5px;
+  font-size: 1.1rem;
+}
+
+/* Export Type Options styling */
+#exportForm fieldset div {
+  text-align: center;
+}
+#exportForm label {
+  display: inline-block;
+  margin: 5px 0;
+  font-size: 1rem;
+}
+#exportForm input[type="radio"] {
+  margin-right: 5px;
+}
+
+/* Table styling for Report Header Details */
+#exportForm table {
+  width: 100%;
+  border-collapse: collapse;
+}
+#exportForm table td {
+  padding: 8px;
+  vertical-align: middle;
+}
+
+/* Input field styling */
+#exportForm input[type="text"],
+#exportForm input[type="date"],
+#exportForm input[type="datetime-local"],
+#exportForm input[type="number"] {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  box-sizing: border-box;
+}
+
+/* PDF File Name Option styling */
+#customPdfNameContainer {
+  margin-top: 10px;
+}
+
+/* Button styling */
+#exportForm button {
+  padding: 10px 20px;
+  margin-right: 10px;
+  border: none;
+  border-radius: 3px;
+  background-color: #104d76;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+#exportForm button:hover {
+  background-color: #125f92;
+}
+
+/* Error message styling */
+#exportError {
+  font-size: 0.9rem;
+  margin-top: 10px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  #exportModal .card-content {
+    padding: 10px;
+  }
+  #exportForm table td {
+    padding: 5px;
+  }
+  #exportForm button {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
