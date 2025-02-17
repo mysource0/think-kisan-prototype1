@@ -28,16 +28,6 @@ import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc
 //     nav_search_operation_button.style.display="none";
 //   }
 // }
-document.addEventListener("DOMContentLoaded", function () {
-  window.showpdfgenerator = function () {
-    if(document.getElementById("pdfgeneratingsection").style.display == "none"){
-      document.getElementById("pdfgeneratingsection").style.display = "block";
-      document.getElementById("last_recent_updated_section").style.display = "none";
-      document.getElementById("range_data_operations").style.display = "none";
-    }
-    
-  };
-});
 
 
 // Firebase configuration (replace with your actual config)
