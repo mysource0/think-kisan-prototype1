@@ -735,7 +735,6 @@ window.createNewDocument = createNewDocument;
 
 
 ///// pdf download
-
 document.addEventListener('DOMContentLoaded', () => {
   // References to modal elements
   const exportModal = document.getElementById('exportModal');
@@ -762,6 +761,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateExportInputs() {
     const selectedType = document.querySelector('input[name="exportType"]:checked').value;
     exportInputs.innerHTML = ''; // Clear previous inputs
+    
     if (selectedType === 'byId') {
       exportInputs.innerHTML = `
         <div>
@@ -801,7 +801,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sensorElements = [
     { key: 'Moisture', label: 'Moisture', unit: '%' },
     { key: 'Temperature', label: 'Temperature', unit: '°C' },
-    { key: 'pH', label: 'pH', unit: '' },
+    { key: 'pH', label: 'pH', unit: 'No Units' },
     { key: 'Nitrogen', label: 'Nitrogen (N)', unit: 'kg/ha' },
     { key: 'Phosphorus', label: 'Phosphorus (P)', unit: 'kg/ha' },
     { key: 'Potassium', label: 'Potassium (K)', unit: 'kg/ha' },
@@ -858,7 +858,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const selectedType = document.querySelector('input[name="exportType"]:checked').value;
       
-      // Define helper to build table rows from a single sensor data object
+      // Helper to build table rows from a single sensor data object
       function buildRowsFromData(dataObj) {
         const rows = [];
         sensorElements.forEach(el => {
@@ -869,6 +869,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return rows;
       }
       
+      // Handle different export types
       if (selectedType === 'byId') {
         const docId = document.getElementById('exportDocId').value.trim();
         if (!docId) {
@@ -895,6 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
         querySnapshot.forEach(doc => {
           records.push({ id: doc.id, data: doc.data() });
         });
+        // Sort descending by doc ID (which you're using as a timestamp)
         records.sort((a, b) => parseInt(b.id) - parseInt(a.id));
         const lastNRecords = records.slice(0, nValue);
         if (lastNRecords.length === 0) {
@@ -902,7 +904,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
         tableTitle = `Average Data for Last ${nValue} Records`;
-        // Compute averages over the sensor elements
+        // Compute averages
         let sums = {};
         let count = 0;
         lastNRecords.forEach(rec => {
@@ -985,7 +987,10 @@ document.addEventListener('DOMContentLoaded', () => {
       let headerRows = [];
       for (let i = 0; i < headerDetails.length; i += 2) {
         if (headerDetails[i + 1]) {
-          headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`, `${headerDetails[i + 1].label}: ${headerDetails[i + 1].value}`]);
+          headerRows.push([
+            `${headerDetails[i].label}: ${headerDetails[i].value}`,
+            `${headerDetails[i + 1].label}: ${headerDetails[i + 1].value}`
+          ]);
         } else {
           headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`]);
         }
@@ -999,23 +1004,34 @@ document.addEventListener('DOMContentLoaded', () => {
         format: "a4"
       });
       
-      // Add header section – using autoTable for the report details
+      // 1) Draw "SOIL HEALTH CARD" bigger and centered at the top
+      pdfDoc.setFontSize(16);
+      pdfDoc.text(
+        'SOIL HEALTH CARD',
+        pdfDoc.internal.pageSize.getWidth() / 2,
+        15, // Y-position
+        { align: 'center' }
+      );
+      
+      // 2) Revert to a smaller font size for the table content
       pdfDoc.setFontSize(12);
+      
+      // 3) Table for "Report Details" using headerRows (start below the heading)
       pdfDoc.autoTable({
-        startY: 10,
-        head: [['SOIL HEALTH CARD', '']],
+        startY: 25,
+        head: [['Report Details', '']], // A small heading row for the table
         body: headerRows,
         theme: 'plain',
         styles: { halign: 'left', cellPadding: 2 },
         headStyles: { fillColor: false, textColor: 0, fontStyle: 'bold' }
       });
       
-      // Add sensor data title
+      // 4) Sensor data title
       let finalY = pdfDoc.lastAutoTable.finalY + 10;
       pdfDoc.setFontSize(14);
       pdfDoc.text(tableTitle, 10, finalY);
       
-      // Add sensor data table with three columns
+      // 5) Sensor data table
       pdfDoc.autoTable({
         startY: finalY + 5,
         head: [['Element', 'Value', 'unit/measurement']],
@@ -1023,12 +1039,16 @@ document.addEventListener('DOMContentLoaded', () => {
         theme: 'grid'
       });
       
-      // Add footer text
+      // 6) Footer text
       const pageHeight = pdfDoc.internal.pageSize.height;
       pdfDoc.setFontSize(10);
-      pdfDoc.text("visit 'https://mysource0.github.io/think-kisan-prototype1' for more information", 10, pageHeight - 10);
+      pdfDoc.text(
+        "visit 'https://mysource0.github.io/think-kisan-prototype1' for more information",
+        10,
+        pageHeight - 10
+      );
       
-      // Save the PDF
+      // 7) Save the PDF
       pdfDoc.save(pdfFileName);
       exportError.style.color = 'green';
       exportError.textContent = 'PDF exported successfully.';
@@ -1055,8 +1075,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
-
-
 
 
 
