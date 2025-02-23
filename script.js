@@ -811,252 +811,285 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Function to generate the PDF
   async function generatePDF() {
-    exportError.textContent = ''; // Clear previous errors
+    const exportError = document.getElementById('exportError');
+    exportError.textContent = '';
+    exportError.style.color = 'inherit';
+
+    // Validate all header fields using array method
+    const requiredFields = [
+        'headerName', 'headerNumber', 'headerLocation', 'headerMandal',
+        'headerSoilType', 'headerState', 'headerSoilDensity', 'headerDateTested',
+        'headerReportGenerated', 'headerCropType', 'headerEquipment'
+    ];
     
-    // Collect Report Header Details
-    const headerName = document.getElementById('headerName').value.trim();
-    const headerNumber = document.getElementById('headerNumber').value.trim();
-    const headerLocation = document.getElementById('headerLocation').value.trim();
-    const headerMandal = document.getElementById('headerMandal').value.trim();
-    const headerSoilType = document.getElementById('headerSoilType').value.trim();
-    const headerState = document.getElementById('headerState').value.trim();
-    const headerSoilDensity = document.getElementById('headerSoilDensity').value.trim();
-    const headerDateTested = document.getElementById('headerDateTested').value.trim();
-    const headerReportGenerated = document.getElementById('headerReportGenerated').value.trim();
-    const headerCropType = document.getElementById('headerCropType').value.trim();
-    const headerEquipment = document.getElementById('headerEquipment').value.trim();
-    
-    // Validate header details
-    if (!headerName || !headerNumber || !headerLocation || !headerMandal || !headerSoilType ||
-        !headerState || !headerSoilDensity || !headerDateTested || !headerReportGenerated ||
-        !headerCropType || !headerEquipment) {
-      exportError.textContent = 'Please fill in all report header details.';
-      return;
+    const missingFields = requiredFields.filter(id => {
+        const el = document.getElementById(id);
+        return !el || !el.value.trim();
+    });
+
+    if (missingFields.length > 0) {
+        exportError.textContent = 'Please fill in all report header details.';
+        return;
     }
-    
-    // Determine PDF file name based on radio option
+
+    // Get field values using object destructuring
+    const fieldValues = Object.fromEntries(requiredFields.map(id => {
+        return [id.replace('header', ''), document.getElementById(id).value.trim()];
+    }));
+
+    // Generate PDF filename
     const pdfNameOption = document.querySelector('input[name="pdfNameOption"]:checked').value;
-    let pdfFileName = '';
-    if (pdfNameOption === 'default') {
-      pdfFileName = `${headerName}_${headerLocation}_${headerSoilType}.pdf`;
-    } else {
-      pdfFileName = document.getElementById('customPdfName').value.trim();
-      if (!pdfFileName) {
-        exportError.textContent = 'Please enter a custom PDF file name.';
-        return;
-      }
-      // Ensure it ends with .pdf
-      if (!pdfFileName.toLowerCase().endsWith('.pdf')) {
+    let pdfFileName = pdfNameOption === 'default' 
+        ? `${fieldValues.Name}_${fieldValues.Location}_${fieldValues.SoilType}.pdf`
+        : document.getElementById('customPdfName').value.trim();
+
+    if (!pdfFileName.toLowerCase().endsWith('.pdf')) {
         pdfFileName += '.pdf';
-      }
     }
-    
-    // Initialize variables for sensor data table rows
-    let tableRows = [];
-    let tableTitle = '';
-    
+
     try {
-      const selectedType = document.querySelector('input[name="exportType"]:checked').value;
-      
-      // Helper to build table rows from a single sensor data object
-      function buildRowsFromData(dataObj) {
-        const rows = [];
-        sensorElements.forEach(el => {
-          if (dataObj[el.key] !== undefined && dataObj[el.key] !== null) {
-            rows.push([el.label, dataObj[el.key], el.unit]);
-          }
-        });
-        return rows;
-      }
-      
-      // Handle different export types
-      if (selectedType === 'byId') {
-        const docId = document.getElementById('exportDocId').value.trim();
-        if (!docId) {
-          exportError.textContent = 'Please enter a Document ID.';
-          return;
-        }
-        const documentReference = docRef(db, "SensorData", docId);
-        const docSnap = await getDoc(documentReference);
-        if (!docSnap.exists()) {
-          exportError.textContent = `No record found with Document ID "${docId}".`;
-          return;
-        }
-        const data = docSnap.data();
-        tableTitle = `Data for Document ID: ${docId}`;
-        tableRows = buildRowsFromData(data);
-      } else if (selectedType === 'lastN') {
-        const nValue = parseInt(document.getElementById('exportLastN').value, 10);
-        if (isNaN(nValue) || nValue <= 0) {
-          exportError.textContent = 'Please enter a valid number for records.';
-          return;
-        }
-        const querySnapshot = await getDocs(collection(db, "SensorData"));
-        let records = [];
-        querySnapshot.forEach(doc => {
-          records.push({ id: doc.id, data: doc.data() });
-        });
-        // Sort descending by doc ID (which you're using as a timestamp)
-        records.sort((a, b) => parseInt(b.id) - parseInt(a.id));
-        const lastNRecords = records.slice(0, nValue);
-        if (lastNRecords.length === 0) {
-          exportError.textContent = 'No records found.';
-          return;
-        }
-        tableTitle = `Average Data for Last ${nValue} Records`;
-        // Compute averages
-        let sums = {};
-        let count = 0;
-        lastNRecords.forEach(rec => {
-          count++;
-          sensorElements.forEach(el => {
-            const value = parseFloat(rec.data[el.key]);
-            if (!isNaN(value)) {
-              sums[el.key] = (sums[el.key] || 0) + value;
-            }
-          });
-        });
-        let averages = {};
-        sensorElements.forEach(el => {
-          if (sums[el.key] !== undefined) {
-            averages[el.key] = (sums[el.key] / count).toFixed(2);
-          }
-        });
-        tableRows = buildRowsFromData(averages);
-      } else if (selectedType === 'dateRange') {
-        const startDateStr = document.getElementById('exportStartDate').value;
-        const endDateStr = document.getElementById('exportEndDate').value;
-        if (!startDateStr || !endDateStr) {
-          exportError.textContent = 'Please enter both start and end date/time.';
-          return;
-        }
-        const startEpoch = Math.floor(new Date(startDateStr).getTime() / 1000);
-        const endEpoch = Math.floor(new Date(endDateStr).getTime() / 1000);
-        const querySnapshot = await getDocs(collection(db, "SensorData"));
-        let filteredRecords = [];
-        querySnapshot.forEach(doc => {
-          const docEpoch = parseInt(doc.id, 10);
-          if (!isNaN(docEpoch) && docEpoch >= startEpoch && docEpoch <= endEpoch) {
-            filteredRecords.push({ id: doc.id, data: doc.data() });
-          }
-        });
-        if (filteredRecords.length === 0) {
-          exportError.textContent = 'No records found in the selected date range.';
-          return;
-        }
-        tableTitle = `Average Data from ${new Date(startEpoch * 1000).toLocaleString()} to ${new Date(endEpoch * 1000).toLocaleString()}`;
-        let sums = {};
-        let count = 0;
-        filteredRecords.forEach(rec => {
-          count++;
-          sensorElements.forEach(el => {
-            const value = parseFloat(rec.data[el.key]);
-            if (!isNaN(value)) {
-              sums[el.key] = (sums[el.key] || 0) + value;
-            }
-          });
-        });
-        let averages = {};
-        sensorElements.forEach(el => {
-          if (sums[el.key] !== undefined) {
-            averages[el.key] = (sums[el.key] / count).toFixed(2);
-          }
-        });
-        tableRows = buildRowsFromData(averages);
-      }
-      
-      if (tableRows.length === 0) {
-        exportError.textContent = 'No sensor data available for export.';
-        return;
-      }
-      
-      // Create header details table rows (2 columns per row if possible)
-      const headerDetails = [
-        { label: "Name", value: headerName },
-        { label: "Number", value: headerNumber },
-        { label: "Location", value: headerLocation },
-        { label: "Mandal", value: headerMandal },
-        { label: "Soil Type", value: headerSoilType },
-        { label: "State", value: headerState },
-        { label: "Soil Density", value: headerSoilDensity },
-        { label: "Date Tested", value: headerDateTested },
-        { label: "Report Generated On", value: headerReportGenerated },
-        { label: "Crop Type", value: headerCropType },
-        { label: "Equipment Used", value: headerEquipment }
-      ];
-      let headerRows = [];
-      for (let i = 0; i < headerDetails.length; i += 2) {
-        if (headerDetails[i + 1]) {
-          headerRows.push([
-            `${headerDetails[i].label}: ${headerDetails[i].value}`,
-            `${headerDetails[i + 1].label}: ${headerDetails[i + 1].value}`
-          ]);
+        // Get sensor data based on export type
+        const { tableRows, tableTitle } = await handleExportType();
+        
+        // Generate PDF content
+        const pdfDoc = generatePdfDocument(fieldValues, tableRows, tableTitle);
+        
+        // Handle PDF saving with Android compatibility
+        const pdfData = pdfDoc.output('datauristring');
+        
+        if (typeof AndroidBridge !== 'undefined') {
+            // Android WebView handling
+            const base64Data = pdfData.split(',')[1];
+            AndroidBridge.savePDF(base64Data, pdfFileName);
         } else {
-          headerRows.push([`${headerDetails[i].label}: ${headerDetails[i].value}`]);
+            // Standard browser handling
+            const link = document.createElement('a');
+            link.href = pdfData;
+            link.download = pdfFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
+
+        exportError.style.color = 'green';
+        exportError.textContent = 'PDF exported successfully.';
+        
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        exportError.style.color = 'red';
+        exportError.textContent = error.message || 'Error exporting data. Please try again.';
+    }
+}
+async function handleExportType() {
+  const selectedType = document.querySelector('input[name="exportType"]:checked').value;
+  const sensorElements = [
+      { key: 'Moisture', label: 'Moisture', unit: '%' },
+      { key: 'Temperature', label: 'Temperature', unit: '°C' },
+      { key: 'pH', label: 'pH', unit: 'No Dimensions' },
+      { key: 'Nitrogen', label: 'Nitrogen (N)', unit: 'kg/ha' },
+      { key: 'Phosphorus', label: 'Phosphorus (P)', unit: 'kg/ha' },
+      { key: 'Potassium', label: 'Potassium (K)', unit: 'kg/ha' },
+      { key: 'Electrical_Conductivity', label: 'Electrical Conductivity (EC)', unit: 'dS/m' },
+      { key: 'RSSI', label: 'RSSI', unit: 'dBm' }
+  ];
+
+  const buildRows = (data) => sensorElements
+      .filter(el => data[el.key] != null)
+      .map(el => [el.label, data[el.key], el.unit]);
+
+  switch(selectedType) {
+      case 'byId':
+          return handleByIdExport(sensorElements, buildRows);
+      case 'lastN':
+          return handleLastNExport(sensorElements, buildRows);
+      case 'dateRange':
+          return handleDateRangeExport(sensorElements, buildRows);
+      default:
+          throw new Error('Invalid export type selected');
+  }
+}
+// Helper function for export type handling
+async function handleByIdExport(sensorElements, buildRows) {
+  const docId = document.getElementById('exportDocId').value.trim();
+  if (!docId) throw new Error('Please enter a Document ID.');
+
+  const docRef = firebaseDoc(db, "SensorData", docId);
+  const docSnap = await getDoc(docRef);
+  
+  if (!docSnap.exists()) {
+      throw new Error(`No record found with Document ID "${docId}".`);
+  }
+
+  return {
+      tableRows: buildRows(docSnap.data()),
+      tableTitle: `Data for Document ID: ${docId}`
+  };
+}
+
+async function handleLastNExport(sensorElements, buildRows) {
+  const nValue = parseInt(document.getElementById('exportLastN').value, 10);
+  if (isNaN(nValue) || nValue <= 0) {
+      throw new Error('Please enter a valid number for records.');
+  }
+
+  const querySnapshot = await getDocs(collection(db, "SensorData"));
+  const records = [];
+  
+  querySnapshot.forEach(doc => {
+      records.push({ id: doc.id, data: doc.data() });
+  });
+
+  // Sort by document ID descending (assuming ID is timestamp)
+  records.sort((a, b) => parseInt(b.id) - parseInt(a.id));
+  const lastNRecords = records.slice(0, nValue);
+
+  if (lastNRecords.length === 0) {
+      throw new Error('No records found.');
+  }
+
+  // Calculate averages
+  const sums = {};
+  let count = 0;
+
+  lastNRecords.forEach(rec => {
+      count++;
+      sensorElements.forEach(el => {
+          const value = parseFloat(rec.data[el.key]) || 0;
+          sums[el.key] = (sums[el.key] || 0) + value;
+      });
+  });
+
+  const averages = Object.fromEntries(
+      sensorElements.map(el => [
+          el.key, 
+          sums[el.key] ? (sums[el.key] / count).toFixed(2) : 'N/A'
+      ])
+  );
+
+  return {
+      tableRows: buildRows(averages),
+      tableTitle: `Average Data for Last ${nValue} Records`
+  };
+}
+
+async function handleDateRangeExport(sensorElements, buildRows) {
+  const startDateStr = document.getElementById('exportStartDate').value;
+  const endDateStr = document.getElementById('exportEndDate').value;
+  
+  if (!startDateStr || !endDateStr) {
+      throw new Error('Please enter both start and end date/time.');
+  }
+
+  const startEpoch = Math.floor(new Date(startDateStr).getTime() / 1000);
+  const endEpoch = Math.floor(new Date(endDateStr).getTime() / 1000);
+
+  const querySnapshot = await getDocs(collection(db, "SensorData"));
+  const filteredRecords = [];
+
+  querySnapshot.forEach(doc => {
+      const docEpoch = parseInt(doc.id, 10);
+      if (!isNaN(docEpoch) && docEpoch >= startEpoch && docEpoch <= endEpoch) {
+          filteredRecords.push({ id: doc.id, data: doc.data() });
       }
-      
-      // Generate PDF with jsPDF and autoTable
-      const { jsPDF } = window.jspdf;
-      const pdfDoc = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4"
+  });
+
+  if (filteredRecords.length === 0) {
+      throw new Error('No records found in the selected date range.');
+  }
+
+  // Calculate averages
+  const sums = {};
+  let count = 0;
+
+  filteredRecords.forEach(rec => {
+      count++;
+      sensorElements.forEach(el => {
+          const value = parseFloat(rec.data[el.key]) || 0;
+          sums[el.key] = (sums[el.key] || 0) + value;
       });
-      
-      // 1) Draw "SOIL HEALTH CARD" bigger and centered at the top
-      pdfDoc.setFontSize(16);
-      pdfDoc.text(
-        'SOIL HEALTH CARD',
-        pdfDoc.internal.pageSize.getWidth() / 2,
-        15, // Y-position
-        { align: 'center' }
-      );
-      
-      // 2) Revert to a smaller font size for the table content
-      pdfDoc.setFontSize(12);
-      
-      // 3) Table for "Report Details" using headerRows (start below the heading)
-      pdfDoc.autoTable({
+  });
+
+  const averages = Object.fromEntries(
+      sensorElements.map(el => [
+          el.key, 
+          sums[el.key] ? (sums[el.key] / count).toFixed(2) : 'N/A'
+      ])
+  );
+
+  return {
+      tableRows: buildRows(averages),
+      tableTitle: `Average Data from ${new Date(startEpoch * 1000).toLocaleString()} to ${new Date(endEpoch * 1000).toLocaleString()}`
+  };
+}
+// PDF document generation
+function generatePdfDocument(fields, tableRows, tableTitle) {
+    const { jsPDF } = window.jspdf;
+    const pdfDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+    // Header Section
+    pdfDoc.setFontSize(16);
+    pdfDoc.text('SOIL HEALTH CARD', pdfDoc.internal.pageSize.getWidth() / 2, 15, { align: 'center' });
+
+    // Header Details Table
+    pdfDoc.setFontSize(12);
+    pdfDoc.autoTable({
         startY: 25,
-        head: [['Report Details', '']], // A small heading row for the table
-        body: headerRows,
+        body: createHeaderRows(fields),
         theme: 'plain',
-        styles: { halign: 'left', cellPadding: 2 },
-        headStyles: { fillColor: false, textColor: 0, fontStyle: 'bold' }
-      });
-      
-      // 4) Sensor data title
-      let finalY = pdfDoc.lastAutoTable.finalY + 10;
-      pdfDoc.setFontSize(14);
-      pdfDoc.text(tableTitle, 10, finalY);
-      
-      // 5) Sensor data table
-      pdfDoc.autoTable({
+        styles: { halign: 'left', cellPadding: 2 }
+    });
+
+    // Sensor Data Section
+    const finalY = pdfDoc.lastAutoTable.finalY + 10;
+    pdfDoc.setFontSize(14);
+    pdfDoc.text(tableTitle, 10, finalY);
+    
+    pdfDoc.autoTable({
         startY: finalY + 5,
-        head: [['Element', 'Value', 'unit/measurement']],
+        head: [['Element', 'Value', 'Unit']],
         body: tableRows,
         theme: 'grid'
-      });
-      
-      // 6) Footer text
-      const pageHeight = pdfDoc.internal.pageSize.height;
-      pdfDoc.setFontSize(10);
-      pdfDoc.text(
-        "visit 'https://mysource0.github.io/think-kisan-prototype1' for more information",
+    });
+
+    // Footer
+    pdfDoc.setFontSize(10);
+    pdfDoc.text(
+        "Visit 'https://mysource0.github.io/think-kisan-prototype1' for more information",
         10,
-        pageHeight - 10
-      );
-      
-      // 7) Save the PDF
-      pdfDoc.save(pdfFileName);
-      exportError.style.color = 'green';
-      exportError.textContent = 'PDF exported successfully.';
-    } catch (error) {
-      exportError.style.color = 'red';
-      exportError.textContent = 'Error exporting data. Please try again.';
-    }
-  }
+        pdfDoc.internal.pageSize.height - 10
+    );
+
+    return pdfDoc;
+}
+
+// Helper function to create header rows
+function createHeaderRows(fields) {
+    const headers = [
+        ['Name', fields.Name],
+        ['Number', fields.Number],
+        ['Location', fields.Location],
+        ['Mandal', fields.Mandal],
+        ['Soil Type', fields.SoilType],
+        ['State', fields.State],
+        ['Soil Density', fields.SoilDensity],
+        ['Date Tested', fields.DateTested],
+        ['Report Generated', fields.ReportGenerated],
+        ['Crop Type', fields.CropType],
+        ['Equipment Used', fields.Equipment]
+    ];
+
+    return headers.reduce((acc, [label, value], index) => {
+        if (index % 2 === 0) {
+            acc.push([`${label}: ${value}`]);
+        } else {
+            acc[acc.length - 1].push(`${label}: ${value}`);
+        }
+        return acc;
+    }, []);
+}
+
+// Add the remaining handler functions (handleByIdExport, handleLastNExport, handleDateRangeExport)
+// from your original code here, following the same pattern
   
   // Attach event listener to the Export PDF button
   exportBtn.addEventListener('click', generatePDF);
@@ -1387,7 +1420,23 @@ async function generatePDF() {
   pdfDoc.text("visit 'https://mysource0.github.io/think-kisan-prototype1' for more information", 10, pageHeight - 10);
   
   // Save the PDF
-  pdfDoc.save(pdfFileName);
+  // 7) Generate and handle PDF
+const pdfData = pdfDoc.output('datauristring');
+const base64Data = pdfData.split(',')[1];
+
+// Save to Firestore (if needed)
+await savePdfReportToFirestore(pdfReportData, pdfNameOption, pdfFileName);
+
+// Handle download
+try {
+    AndroidBridge.savePDF(base64Data, pdfFileName);
+    exportError.style.color = 'green';
+    exportError.textContent = 'PDF exported successfully.';
+} catch (error) {
+    console.error('Download error:', error);
+    exportError.style.color = 'red';
+    exportError.textContent = 'Error initiating download. Please try again.';
+}
   
   // Prepare data object for Firestore log
   const pdfReportData = {
@@ -1417,3 +1466,4 @@ async function generatePDF() {
   document.querySelector(".export-error").style.color = "green";
   document.querySelector(".export-error").textContent = "PDF exported and report logged successfully.";
 }
+// 7) Save the PDF
