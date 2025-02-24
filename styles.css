@@ -557,3 +557,20 @@
     margin-bottom: 10px;
   }
 }
+
+
+.battery_block {
+  display: inline;
+
+}
+.battery_container{
+  text-align: center;
+}
+
+.manual_create_button_div {
+  color: #2b9044;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-size: 18px;
+}
