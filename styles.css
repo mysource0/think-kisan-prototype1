@@ -574,3 +574,6 @@
   text-align: center;
   font-size: 18px;
 }
+#batteryStatus {
+  font-size: 14px;
+}
