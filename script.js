@@ -1,7 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // nav buttons
 
@@ -42,20 +42,44 @@ import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc
 
 // Firebase configuration (replace with your actual config)
 const firebaseConfig = {
-    apiKey: "AIzaSyBfUMZZyYlA7WcpwlLeM3KbtxhBsmJ_3N8",
-    authDomain: "thinksong-b4086.firebaseapp.com",
-    projectId: "thinksong-b4086",
-    storageBucket: "thinksong-b4086.firebasestorage.app",
-    messagingSenderId: "68241922299",
-    appId: "1:68241922299:web:a0d329ee7c3e741f18b85e",
-    measurementId: "G-1QJ8HTK9N9"
+  apiKey: "AIzaSyBfUMZZyYlA7WcpwlLeM3KbtxhBsmJ_3N8",
+  authDomain: "thinksong-b4086.firebaseapp.com",
+  databaseURL: "https://thinksong-b4086-default-rtdb.asia-southeast1.firebasedatabase.app", // Updated URL
+  projectId: "thinksong-b4086",
+  storageBucket: "thinksong-b4086.firebasestorage.app",
+  messagingSenderId: "68241922299",
+  appId: "1:68241922299:web:a0d329ee7c3e741f18b85e",
+  measurementId: "G-1QJ8HTK9N9"
 };
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const realtimeDb = getDatabase(app); 
 
 
+
+
+
+
+    // Function to Read and Update Battery Values
+    function readValues() {
+      // Use realtimeDb instead of database
+      const receiverRef = ref(realtimeDb, 'receiver_battery_percentage/value');
+      const transmitterRef = ref(realtimeDb, 'transmitter_battery_percentage/value');
+    
+      onValue(receiverRef, (snapshot) => {
+        document.getElementById('receiverBattery').textContent = snapshot.val();
+      });
+    
+      onValue(transmitterRef, (snapshot) => {
+        document.getElementById('transmitterBattery').textContent = snapshot.val();
+      });
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      displayLastRecentData();
+      readValues(); // 👈 ADD THIS LINE TO INITIALIZE BATTERY LISTENERS
+    });
 
 
 // Function to fetch and display All sensor data
@@ -463,7 +487,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const range_operations_nav = document.getElementById("range_data_operations");
   const last_recent_updated_section = document.getElementById("last_recent_updated_section");
 
-
+  
   // Set initial visibility
   range_operations_nav.style.display = "none";
   last_recent_updated_section.style.display = "block";
@@ -481,6 +505,7 @@ document.addEventListener('DOMContentLoaded', () => {
       range_operations_nav.style.display = "block";
     }
   };
+
 
   window.displayLastRecentData = function displayLastRecentData(){
     search_results_section.style.display = "none";
@@ -1105,6 +1130,10 @@ function createHeaderRows(fields) {
   if (exportDataButton) {
     exportDataButton.addEventListener('click', () => {
       exportModal.style.display = 'block';
+      document.getElementById("last_recent_updated_section").style.display="none";
+      document.getElementById("search_results_section").style.display = "none";
+      document.getElementById("range_data_operations").style.display = "none";
+      
     });
   }
 });
