@@ -904,7 +904,56 @@ document.addEventListener('DOMContentLoaded', () => {
         exportError.style.color = 'red';
         exportError.textContent = error.message || 'Error exporting data. Please try again.';
     }
-}
+
+///////////////
+
+///for native
+
+    exportError.textContent = '';
+    exportError.style.color = 'inherit';
+
+    try {
+        // Fetch data asynchronously
+        const { tableRows, tableTitle } = await handleExportType();
+
+        // Define pdfDoc
+        const { jsPDF } = window.jspdf;
+        const pdfDoc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+        // Add content to the PDF (customize this based on your needs)
+        pdfDoc.text("Example Title", 10, 10);
+        // ... (additional PDF content)
+
+        // Generate PDF data
+        const pdfData = pdfDoc.output('datauristring');
+
+        // Handle PDF saving (e.g., for browser or Android compatibility)
+        if (typeof AndroidBridge !== 'undefined') {
+            // Android WebView handling
+            const base64Data = pdfData.split(',')[1];
+            AndroidBridge.savePDF(base64Data, "document.pdf");
+        } else {
+            // Standard browser download
+            const link = document.createElement('a');
+            link.href = pdfData;
+            link.download = "document.pdf";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Success message
+        exportError.style.color = 'green';
+        exportError.textContent = 'PDF exported successfully.';
+    } catch (error) {
+        console.error('PDF generation error:', error);
+        exportError.style.color = 'red';
+        exportError.textContent = error.message || 'Error exporting data. Please try again.';
+    }
+
+
+////////////
+  }
 async function handleExportType() {
   const selectedType = document.querySelector('input[name="exportType"]:checked').value;
   const sensorElements = [
