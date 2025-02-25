@@ -1496,3 +1496,40 @@ try {
   document.querySelector(".export-error").textContent = "PDF exported and report logged successfully.";
 }
 // 7) Save the PDF
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  const generatePdfButton = document.getElementById('exportBtn'); // Replace with your button/link ID or selector
+  if (generatePdfButton) {
+    generatePdfButton.addEventListener('click', function(event) {
+      if (window.ReactNativeWebView) {
+        event.preventDefault();
+        // Adjust the URL and method to match your PDF generation endpoint
+        fetch('/path/to/generate/pdf', {
+          method: 'POST', // or 'GET', depending on your setup
+          body: new FormData(this.form), // if triggered by a form; adjust as needed
+        })
+        .then(response => {
+          if (!response.ok) throw new Error('Failed to fetch PDF');
+          return response.blob();
+        })
+        .then(blob => {
+          const reader = new FileReader();
+          reader.onloadend = function() {
+            const base64data = reader.result.split(',')[1]; // Remove data URL prefix
+            window.ReactNativeWebView.postMessage(JSON.stringify({
+              type: 'download-pdf',
+              data: base64data
+            }));
+          };
+          reader.readAsDataURL(blob);
+        })
+        .catch(error => {
+          console.error('Error fetching PDF:', error);
+        });
+      } else {
+        // Normal browser behavior (e.g., form submission or link navigation)
+      }
+    });
+  }
+});
