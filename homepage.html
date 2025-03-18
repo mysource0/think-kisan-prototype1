@@ -6,7 +6,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sensor Dashboard</title>
-  <link rel="stylesheet" href="styles_new.css">
+  <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
@@ -83,7 +83,9 @@
   <h2><i class="fas fa-search"></i> Searched Results  </h2>
   <div class="card-content">
     <div id="search_results">
+        
   </div>
+  <button type="button" onclick="Search_close()" id="Search_close">Close</button>
 </section>
 
 <!-------------creating document feed back-->
@@ -395,7 +397,12 @@
 
 
 
-
+<script>
+    let search_r = document.getElementById("search_results_section");
+    function Search_close(){
+        search_r.style.display="none";
+    }
+</script>
 
 <script>
   // Add Android Bridge polyfill for web browsers
