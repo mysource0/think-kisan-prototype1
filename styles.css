@@ -154,7 +154,7 @@
   /* FAB Styles */
   .fab-container {
     position: fixed;
-    bottom: 2rem;
+    bottom: 6rem;
     right: 3rem;
 
     z-index: 1000;
@@ -574,6 +574,7 @@
   text-align: center;
   font-size: 18px;
 }
+
 #batteryStatus {
   font-size: 14px;
 }
