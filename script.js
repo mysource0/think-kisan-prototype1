@@ -105,7 +105,7 @@ export async function getSensorData() {
       const data = doc.data();
       // Convert the document ID (assumed to be epoch in seconds) to a local date string
       const time_convert = new Date(parseInt(doc.id, 10) * 1000).toLocaleString();
-
+      
       const dataHtml = `
         <div class="data-card">
           <h3>Sensor ID: ${doc.id} [<i>recorded at</i>] ${time_convert}</h3>
@@ -544,6 +544,7 @@ function create_report() {
 
   } else {
     container.style.display = "none";
+    document.getElementById("last_recent_updated_section").style.display="block";
   }
 }
 window.create_report = create_report;
