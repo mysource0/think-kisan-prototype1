@@ -691,7 +691,7 @@ function hideSections(sectionIds) {
 async function createNewDocument() {
   const feedbackEl = document.getElementById("creationFeedback");
   const submitButton = document.getElementById("submitButton");
-
+  document.getElementById("last_recent_updated_section").style.display="block";
   if (!feedbackEl || !submitButton) {
     console.error("Missing required elements: creationFeedback or submitButton.");
     return;
