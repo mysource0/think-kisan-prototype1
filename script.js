@@ -107,18 +107,53 @@ export async function getSensorData() {
       const time_convert = new Date(parseInt(doc.id, 10) * 1000).toLocaleString();
       
       const dataHtml = `
-        <div class="data-card">
-          <h3>Sensor ID: ${doc.id} [<i>recorded at</i>] ${time_convert}</h3>
-          <p><strong>Moisture:</strong> ${data.Moisture}</p>
-          <p><strong>Temperature:</strong> ${data.Temperature}°C</p>
-          <p><strong>pH:</strong> ${data.pH}</p>
-          <p><strong>Nitrogen:</strong> ${data.Nitrogen}</p>
-          <p><strong>Phosphorus:</strong> ${data.Phosphorus}</p>
-          <p><strong>Potassium:</strong> ${data.Potassium}</p>
-          <p><strong>Electrical Conductivity:</strong> ${data.Electrical_Conductivity}</p>
-          <p><strong>RSSI:</strong> ${data.RSSI}</p>
-          <p><strong>Timestamp:</strong> ${data.Timestamp}</p>
-        </div>
+<div class="data-table">
+  <table border="1" cellspacing="0" cellpadding="5">
+    <!-- Header row showing Sensor ID and recorded time -->
+    <tr>
+      <th colspan="2">Sensor ID: ${doc.id} [<i>recorded at</i>] ${time_convert}</th>
+    </tr>
+    <!-- Each sensor attribute as a row with label on the left and value on the right -->
+    <tr>
+      <td><strong>Moisture:</strong></td>
+      <td>${data.Moisture}</td>
+    </tr>
+    <tr>
+      <td><strong>Temperature:</strong></td>
+      <td>${data.Temperature}°C</td>
+    </tr>
+    <tr>
+      <td><strong>pH:</strong></td>
+      <td>${data.pH}</td>
+    </tr>
+    <tr>
+      <td><strong>Nitrogen:</strong></td>
+      <td>${data.Nitrogen}</td>
+    </tr>
+    <tr>
+      <td><strong>Phosphorus:</strong></td>
+      <td>${data.Phosphorus}</td>
+    </tr>
+    <tr>
+      <td><strong>Potassium:</strong></td>
+      <td>${data.Potassium}</td>
+    </tr>
+    <tr>
+      <td><strong>Electrical Conductivity:</strong></td>
+      <td>${data.Electrical_Conductivity}</td>
+    </tr>
+    <tr>
+      <td><strong>RSSI:</strong></td>
+      <td>${data.RSSI}</td>
+    </tr>
+    <tr>
+      <td><strong>Timestamp:</strong></td>
+      <td>${data.Timestamp}</td>
+    </tr>
+  </table>
+</div><br><br><hr><br>
+
+
       `;
       dataContainer.innerHTML += dataHtml;
     });
