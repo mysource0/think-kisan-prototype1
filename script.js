@@ -1,7 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // nav buttons
 
@@ -58,6 +58,37 @@ const db = getFirestore(app);
 const realtimeDb = getDatabase(app); 
 
 
+// Get reference to relay status
+const relayStatusRef = ref(realtimeDb, "relay_status/value");
+
+// Function to handle toggle switches
+function toggles(event) {
+    let manualToggle = document.getElementById("manual_toggle");
+    let automaticToggle = document.getElementById("automatic_toggle");
+
+    if (event.target.id === "manual_toggle") {
+        if (manualToggle.checked) {
+            automaticToggle.checked = false; // Turn off Automatic
+            set(relayStatusRef, "ON"); // Update relay status in Firebase
+        } else {
+            set(relayStatusRef, "OFF"); // Update relay status in Firebase
+        }
+    } else if (event.target.id === "automatic_toggle") {
+        if (automaticToggle.checked) {
+            manualToggle.checked = false; // Turn off Manual
+        }
+    }
+}
+
+// Listen for changes in relay status and update UI
+onValue(relayStatusRef, (snapshot) => {
+    let relayStatus = snapshot.val();
+    document.getElementById("relay_status").textContent = "Relay Status: " + relayStatus;
+});
+
+// Add event listeners for toggles
+document.getElementById("manual_toggle").addEventListener("change", toggles);
+document.getElementById("automatic_toggle").addEventListener("change", toggles);
 
 
 
@@ -67,6 +98,7 @@ const realtimeDb = getDatabase(app);
       // Use realtimeDb instead of database
       const receiverRef = ref(realtimeDb, 'receiver_battery_percentage/value');
       const transmitterRef = ref(realtimeDb, 'transmitter_battery_percentage/value');
+      const relayStatusRef = ref(realtimeDb, "relay_status/value");
     
       onValue(receiverRef, (snapshot) => {
         document.getElementById('receiverBattery').textContent = snapshot.val();
@@ -75,6 +107,9 @@ const realtimeDb = getDatabase(app);
       onValue(transmitterRef, (snapshot) => {
         document.getElementById('transmitterBattery').textContent = snapshot.val();
       });
+      onValue(relayStatusRef, (snapshot) => {
+        document.getElementById("relay_status").textContent = "Relay status : " + snapshot.val();
+    });
     }
     document.addEventListener('DOMContentLoaded', () => {
       displayLastRecentData();
