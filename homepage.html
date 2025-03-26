@@ -85,7 +85,8 @@
     <div id="search_results">
         
   </div>
-  <button type="button" onclick="Search_close()" id="Search_close">Close</button>
+
+  
 </section>
 
 <!-------------creating document feed back-->
@@ -94,12 +95,36 @@
 </section>
 <!-- last recent updaetd data-->
 
+<button type="button" onclick="show_recent()" id="Search_close">refresh</button>
 
 <section class="data-card updated" id="last_recent_updated_section">
     <h2><i class="fas fa-history"></i> Last Updated</h2>
     <div class="card-content">
       <div id="lastRecentOutput">Loading...</div>
     </div>
+    <br>
+    <br><hr width="100%">
+    <section>
+      <h1><div class="relay-status" id="relay_status"></div>  </h1>
+      <div class="relay-card data-card">
+       
+        <div class="relay-automatic">
+          <h2>Manual</h2>
+          <label class="switch">
+          <input type="checkbox" id="manual_toggle">
+          <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="relay-manual">  
+          <h2>Automatic</h2>      
+          <label class="switch">
+          <input type="checkbox" id="automatic_toggle" > 
+            <span class="slider round"></span>
+          </label>
+        </div>
+      </div>
+    </section>
 </section>
 
 
