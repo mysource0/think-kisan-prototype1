@@ -82,7 +82,7 @@ function toggles(event) {
 
 // Listen for changes in relay status and update UI
 onValue(relayStatusRef, (snapshot) => {
-    let relayStatus = snapshot.val();
+    const relayStatus = snapshot.val();
     document.getElementById("relay_status").textContent = "Relay Status: " + relayStatus;
 });
 
@@ -202,6 +202,30 @@ export async function getSensorData() {
 window.getSensorData = getSensorData;
 
 ////
+function updateDashboard(data) {
+  // single‐ring: id, value, max
+  renderGauge('moisture',   data.Moisture,    100);
+  renderGauge('ph',         data.pH,          14);
+  renderGauge('temperature',data.Temperature, 55);
+  renderGauge('nitrogen',   data.Nitrogen,    200);
+  renderGauge('phosphorus', data.Phosphorus,  400);
+  renderGauge('potassium',  data.Potassium,   400);
+}
+
+function renderGauge(id, value, max) {
+  const svgCircle = document.querySelector(`#${id} circle.fg`);
+  const r = svgCircle.r.baseVal.value;
+  const circumference = 2 * Math.PI * r;
+  svgCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+  const offset = circumference * (1 - Math.min(value / max, 1));
+  svgCircle.style.strokeDashoffset = offset;
+
+  // Add unit conditionally
+  const npkFields = ["nitrogen", "phosphorus", "potassium"];
+  const unit = npkFields.includes(id.toLowerCase()) ? " kg/hec" : "";
+  document.getElementById(`${id}-value`).innerText = `${(value)}${unit}`;
+}
+
 
 
 // Function to fetch & display the last recent data (highest doc.id as epoch)
@@ -249,9 +273,9 @@ async function displayLastRecentData() {
       // Convert epoch to a readable local time
       const localTime = new Date(maxEpoch * 1000).toLocaleString();
       const data = lastDoc.data();
-  
+      
       console.log("Most recent document:", lastDoc.id, data);
-  
+      updateDashboard(data);
       // Build the HTML table to display the data in a clean format
       document.getElementById("lastRecentOutput").innerHTML = `
         <h3>Most Recent Sensor Data</h3>
