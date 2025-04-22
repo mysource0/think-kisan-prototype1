@@ -1,0 +1,60 @@
+#Dashboard {
+    width: 100%;
+    max-width: 800px;
+    margin: 24px auto;
+  }
+  .dashboard-row {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 32px;
+  }
+  
+  /* Make .gauge a positioning container again */
+  .gauge {
+    position: relative;          /* <- re‑added */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+    /* height is now auto so titles fit */
+  }
+  
+  .gauge svg {
+    transform: rotate(-90deg);
+    width: 120px;
+    height: 120px;
+  }
+  
+  .gauge circle {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+  }
+  .gauge circle.bg {
+    stroke: #eee;
+  }
+  .gauge circle.fg {
+    stroke: #4caf50;
+    stroke-dasharray: 0 1000;
+    transition: stroke-dashoffset 0.6s ease;
+  }
+  
+  /* label in the middle of the SVG */
+  .gauge .label {
+    position: absolute;      /* now correctly uses .gauge as its reference */
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+  }
+  
+  /* title sits below the SVG */
+  .gauge .title {
+    margin-top: 8px;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+  }
+  
