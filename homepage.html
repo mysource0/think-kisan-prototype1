@@ -109,26 +109,26 @@
   <div class="dashboard-row">
     <div class="gauge" id="moisture">
       <svg viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="49" />
-        <circle class="fg" cx="60" cy="60" r="49" />
+        <circle class="bg" cx="60" cy="60" r="42" />
+        <circle class="fg" cx="60" cy="60" r="42" />
       </svg>
-      <div class="label"><span id="moisture-value">0</span>%</div>
+      <div class="label" id="label_text_in_circle"><span id="moisture-value">0</span>%</div>
       <div class="title">Moisture</div>
     </div>
     <div class="gauge" id="ph">
       <svg viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="49" />
-        <circle class="fg" cx="60" cy="60" r="49" />
+        <circle class="bg" cx="60" cy="60" r="42" />
+        <circle class="fg" cx="60" cy="60" r="42" />
       </svg>
-      <div class="label"><span id="ph-value">0</span></div>
+      <div class="label" id="label_text_in_circle"><span id="ph-value">0</span></div>
       <div class="title">pH</div>
     </div>
     <div class="gauge" id="temperature">
       <svg viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="49" />
-        <circle class="fg" cx="60" cy="60" r="49" />
+        <circle class="bg" cx="60" cy="60" r="42" />
+        <circle class="fg" cx="60" cy="60" r="42" />
       </svg>
-      <div class="label"><span id="temperature-value">0</span>°C</div>
+      <div class="label" id="label_text_in_circle"><span id="temperature-value">0</span>°C</div>
       <div class="title">Temperature</div>
     </div>
   </div>
@@ -137,26 +137,26 @@
   <div class="dashboard-row">
     <div class="gauge" id="nitrogen">
       <svg viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="49" />
-        <circle class="fg" cx="60" cy="60" r="49" />
+        <circle class="bg" cx="60" cy="60" r="42" />
+        <circle class="fg" cx="60" cy="60" r="42" />
       </svg>
-      <div class="label"><span id="nitrogen-value">0</span></div>
+      <div class="label" id="label_text_in_circle"><span id="nitrogen-value">0</span></div>
       <div class="title">Nitrogen</div>
     </div>
     <div class="gauge" id="phosphorus">
       <svg viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="49" />
-        <circle class="fg" cx="60" cy="60" r="49" />
+        <circle class="bg" cx="60" cy="60" r="42" />
+        <circle class="fg" cx="60" cy="60" r="42" />
       </svg>
-      <div class="label"><span id="phosphorus-value">0</span></div>
+      <div class="label" id="label_text_in_circle"><span id="phosphorus-value">0</span></div>
       <div class="title">Phosphorus</div>
     </div>
     <div class="gauge" id="potassium">
       <svg viewBox="0 0 120 120">
-        <circle class="bg" cx="60" cy="60" r="49" />
-        <circle class="fg" cx="60" cy="60" r="49" />
+        <circle class="bg" cx="60" cy="60" r="42" />
+        <circle class="fg" cx="60" cy="60" r="42" />
       </svg>
-      <div class="label"><span id="potassium-value">0</span></div>
+      <div class="label" id="label_text_in_circle"><span id="potassium-value">0</span></div>
       <div class="title">Potassium</div>
     </div>
   </div>
@@ -172,7 +172,7 @@
       <div class="relay-card data-card">
        
         <div class="relay-automatic">
-          <h2>Realy</h2>
+          <h2>Relay Supply</h2>
           <label class="switch">
           <input type="checkbox" id="manual_toggle">
           <span class="slider round"></span>
@@ -180,11 +180,15 @@
         </div>
 
         <div class="relay-manual">  
-          <h2>Automatic</h2>      
-          <label class="switch">
+          <br>
+          <hr><h2>Automatic</h2>      
+          <label class="switch" class="automatic_switch" style="margin-left:30px;">
           <input type="checkbox" id="automatic_toggle" > 
             <span class="slider round"></span>
           </label>
+        <div id="automatic_selector"> <br> <label for="moisture_volume" id="moisture_volume_display">Selected Moisture : 30</label>
+              <input type="range" min="10" max="100" step="10" value="30" id="moisture_volume"></div>
+              
         </div>
       </div>
     </section>
