@@ -5,7 +5,7 @@ import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/fir
 
 // nav buttons
 
-// let nav_last_recent_button = document.getElementById("last_recent_updated_section");
+//let nav_last_recent_button = document.getElementById("last_recent_updated_section");
 //let nav_search_operation_button = document.getElementById("search_results_section");
 // let nav_database_reading_operations_button = document.getElementById("range_data_operations");
 
