@@ -586,7 +586,7 @@
 }
 .relay-card {
   display: flex;
-  flex-direction: row;
+  flex-direction: column;
   justify-content: space-around;
   align-items: center;
 }
@@ -596,6 +596,8 @@
 .switch {
   position: relative;
   display: inline-block;
+  justify-content: center;
+  align-items: center;
   width: 60px;
   height: 34px;
 }
@@ -605,6 +607,7 @@
   width: 0;
   height: 0;
 }
+
 
 .slider {
   position: absolute;
@@ -651,4 +654,29 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+#automatic_toggle {
+  margin-left: -130px;
+}
+
+
+#moisture_volume {
+  width: 100%;
+  appearance: none;
+  height: 12px;
+  background: repeating-linear-gradient(to right, #146917 0%, #03e312 2%, #ccc 2%, #94e3e5 10%);
+  border-radius: 10px;
+  
+}
+
+#moisture_volume::-webkit-slider-thumb {
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  background: #4CAF50;
+  border-radius: 50%;
+  cursor: pointer;
+  position: relative;
+  z-index: 5;
 }
