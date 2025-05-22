@@ -69,9 +69,9 @@ function toggles(event) {
     if (event.target.id === "manual_toggle") {
         if (manualToggle.checked) {
             automaticToggle.checked = false; // Turn off Automatic
-            set(relayStatusRef, "ON"); // Update relay status in Firebase
+            set(relayStatusRef, "on"); // Update relay status in Firebase
         } else {
-            set(relayStatusRef, "OFF"); // Update relay status in Firebase
+            set(relayStatusRef, "off"); // Update relay status in Firebase
         }
     } else if (event.target.id === "automatic_toggle") {
         if (automaticToggle.checked) {
