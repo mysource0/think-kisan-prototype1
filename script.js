@@ -1,7 +1,7 @@
 // Import Firebase modules
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 // nav buttons
 
@@ -60,23 +60,59 @@ const realtimeDb = getDatabase(app);
 
 // Get reference to relay status
 const relayStatusRef = ref(realtimeDb, "relay_status/value");
+const moisture_realtime = ref(realtimeDb, "moisture_realtime");
+const moisture_set_tobe = ref(realtimeDb, "moisture_set_tobe");
 
+
+    let automatic_selector = document.getElementById("automatic_selector");
+    automatic_selector.style.display="none";
 // Function to handle toggle switches
 function toggles(event) {
     let manualToggle = document.getElementById("manual_toggle");
     let automaticToggle = document.getElementById("automatic_toggle");
-
+    let automatic_selector = document.getElementById("automatic_selector");
+    automatic_selector.style.display="none";
     if (event.target.id === "manual_toggle") {
         if (manualToggle.checked) {
-            automaticToggle.checked = false; // Turn off Automatic
+            // automaticToggle.checked = false;
+            automatic_selector.style.display="none";
+             // Turn off Automatic
             set(relayStatusRef, "on"); // Update relay status in Firebase
         } else {
-            set(relayStatusRef, "off"); // Update relay status in Firebase
+            set(relayStatusRef, "off");
+            automaticToggle.checked = false; // Update relay status in Firebase
         }
     } else if (event.target.id === "automatic_toggle") {
-        if (automaticToggle.checked) {
-            manualToggle.checked = false; // Turn off Manual
+
+
+if (automaticToggle.checked && manualToggle.checked) {
+  automatic_selector.style.display = "block";
+
+  document.querySelector('#moisture_volume').addEventListener('input', function () {
+    const selectedValue = this.value;
+    document.getElementById("moisture_volume_display").innerHTML = `Selected Moisture Value: ${selectedValue}`;
+    set(moisture_set_tobe, selectedValue);
+
+    get(moisture_realtime).then((snapshot) => {
+      if (snapshot.exists()) {
+        const currentMoisture = snapshot.val();
+        if (selectedValue > currentMoisture) {
+          set(relayStatusRef, "on");
+        } else {
+          set(relayStatusRef, "off");
         }
+      }
+    }).catch((error) => {
+      console.error("Error reading moisture value:", error);
+    });
+  });
+}
+
+             // Update relay status in Firebase
+         else {
+            set(relayStatusRef, "off"); // Update relay status in Firebase
+        }    
+        
     }
 }
 
