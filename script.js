@@ -5,7 +5,7 @@ import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/fir
 
 // nav buttons
 
-//let nav_last_recent_button = document.getElementById("last_recent_updated_section");
+// let nav_last_recent_button = document.getElementById("last_recent_updated_section");
 //let nav_search_operation_button = document.getElementById("search_results_section");
 // let nav_database_reading_operations_button = document.getElementById("range_data_operations");
 
@@ -59,7 +59,7 @@ const realtimeDb = getDatabase(app);
 
 
 // Get reference to relay status
-const relayStatusRef = ref(realtimeDb, "relay_status/value");
+const relayStatusRef = ref(realtimeDb, "relay_status");
 const moisture_realtime = ref(realtimeDb, "moisture_realtime");
 const moisture_set_tobe = ref(realtimeDb, "moisture_set_tobe");
 
@@ -134,7 +134,7 @@ document.getElementById("automatic_toggle").addEventListener("change", toggles);
       // Use realtimeDb instead of database
       const receiverRef = ref(realtimeDb, 'receiver_battery_percentage/value');
       const transmitterRef = ref(realtimeDb, 'transmitter_battery_percentage/value');
-      const relayStatusRef = ref(realtimeDb, "relay_status/value");
+      const relayStatusRef = ref(realtimeDb, "relay_status");
     
       onValue(receiverRef, (snapshot) => {
         document.getElementById('receiverBattery').textContent = snapshot.val();
