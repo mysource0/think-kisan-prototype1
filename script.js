@@ -57,110 +57,98 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const realtimeDb = getDatabase(app); 
 
-
-// Get reference to relay status
-const relayStatusRef = ref(realtimeDb, "relay_status");
-const moisture_realtime = ref(realtimeDb, "moisture_realtime/moisture_realtime");
-const moisture_set_tobe = ref(realtimeDb, "moisture_set_tobe");
+//-------------- started here ---------------//
 
 
-    let automatic_selector = document.getElementById("automatic_selector");
-    automatic_selector.style.display="none";
-// Function to handle toggle switches
-function toggles(event) {
-    let manualToggle = document.getElementById("manual_toggle");
-    let automaticToggle = document.getElementById("automatic_toggle");
-    let automatic_selector = document.getElementById("automatic_selector");
-    automatic_selector.style.display="none";
-    if (event.target.id === "manual_toggle") {
-        if (manualToggle.checked) {
-            // automaticToggle.checked = false;
-            automatic_selector.style.display="none";
-             // Turn off Automatic
-            set(relayStatusRef, "on"); // Update relay status in Firebase
-        } else {
-            set(relayStatusRef, "off");
-            automaticToggle.checked = false;
-            set(moisture_set_tobe, 0); // Update relay status in Firebase
-        }
-    } else if (event.target.id === "automatic_toggle") {
+// 1) Firebase refs
+const relayStatusRef      = ref(realtimeDb, "relay_status");
+const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
+const moistureSetRef      = ref(realtimeDb, "moisture_set_tobe");
 
+// 2) Cache DOM nodes
+const manualToggle      = document.getElementById("manual_toggle");
+const automaticToggle   = document.getElementById("automatic_toggle");
+const autoControlsDIV   = document.getElementById("automatic_selector");
+const slider            = document.getElementById("moisture_volume");
+const sliderDisplaySpan = document.getElementById("moisture_volume_display");
 
-if (automaticToggle.checked && manualToggle.checked) {
-  automatic_selector.style.display = "block";
+// 3) Initial UI & DB state
+autoControlsDIV.style.display = "none";   // hide the auto UI
+set(moistureSetRef, 0);                   // clear any old setpoint
 
-  document.querySelector('#moisture_volume').addEventListener('input', function () {
-    let selectedValue = this.value;
-    document.getElementById("moisture_volume_display").innerHTML = `Selected Moisture Value: ${selectedValue}`;
-    set(moisture_set_tobe, selectedValue);
+// 4) Permanent moisture watcher
+//    Fires _on every_ value change in RTDB:
+onValue(moistureRealtimeRef, snap => {
+  const current = parseFloat(snap.val()) || 0;
+  const setpt   = parseFloat(slider.value) || 0;
 
-    get(moisture_realtime).then((snapshot) => {
-      if (snapshot.exists()) {
-        const currentMoisture = snapshot.val();
-        if (selectedValue < currentMoisture) {
-          console.log("current : ",currentMoisture);
-          console.log("selected : ",selectedValue);
-          
-          set(relayStatusRef, "on");
-        } else {
-          set(relayStatusRef, "off");
-          set(moisture_set_tobe, 0);
-          
-        }
-      }
-      if(automaticToggle.checked == false){
-        set(moisture_set_tobe, 0);
-        }
-    }).catch((error) => {
-      console.error("Error reading moisture value:", error);
-    });
-  });
-}
-
-             // Update relay status in Firebase
-         else {
-            set(relayStatusRef, "off"); // Update relay status in Firebase
-           set(moisture_set_tobe, 0);
-        }    
-        
-    }
-}
-
-// Listen for changes in relay status and update UI
-onValue(relayStatusRef, (snapshot) => {
-    const relayStatus = snapshot.val();
-    document.getElementById("relay_status").textContent = "Relay Status: " + relayStatus;
+  // Only in *automatic* mode (and manual still on!)
+  if (manualToggle.checked && automaticToggle.checked && setpt > 0) {
+    // flip relay based on your rule:
+    set(relayStatusRef, current < setpt ? "on" : "off");
+  }
 });
 
-// Add event listeners for toggles
-document.getElementById("manual_toggle").addEventListener("change", toggles);
-document.getElementById("automatic_toggle").addEventListener("change", toggles);
+// 5) Slider input → update DB + display
+slider.addEventListener("input", () => {
+  const val = parseFloat(slider.value) || 0;
+  sliderDisplaySpan.textContent = `Selected Moisture Value: ${val}`;
+  set(moistureSetRef, val);
+  // Immediately re-evaluate relay once more:
+  get(moistureRealtimeRef).then(snap => {
+    const cur = parseFloat(snap.val()) || 0;
+    set(relayStatusRef, cur > val ? "on" : "off");
+  });
+});
 
-
-
-
-    // Function to Read and Update Battery Values
-    function readValues() {
-      // Use realtimeDb instead of database
-      const receiverRef = ref(realtimeDb, 'receiver_battery_percentage/value');
-      const transmitterRef = ref(realtimeDb, 'transmitter_battery_percentage/value');
-      const relayStatusRef = ref(realtimeDb, "relay_status");
-    
-      onValue(receiverRef, (snapshot) => {
-        document.getElementById('receiverBattery').textContent = snapshot.val();
-      });
-    
-      onValue(transmitterRef, (snapshot) => {
-        document.getElementById('transmitterBattery').textContent = snapshot.val();
-      });
-      onValue(relayStatusRef, (snapshot) => {
-        document.getElementById("relay_status").textContent = "Relay status : " + snapshot.val();
-    });
+// 6) Toggle handler
+function toggles(e) {
+  // — MANUAL switch —
+  if (e.target === manualToggle) {
+    if (manualToggle.checked) {
+      // Manual ON → immediate relay ON, auto still off until user flips it
+      set(relayStatusRef, "on");
+    } else {
+      // Manual OFF → kill everything
+      automaticToggle.checked = false;
+      autoControlsDIV.style.display = "none";
+      set(relayStatusRef, "off");
+      set(moistureSetRef, 0);
     }
-    document.addEventListener('DOMContentLoaded', () => {
-      displayLastRecentData();
-      readValues(); // 👈 ADD THIS LINE TO INITIALIZE BATTERY LISTENERS
-    });
+  }
+
+  // — AUTOMATIC switch —
+  if (e.target === automaticToggle) {
+    if (automaticToggle.checked && manualToggle.checked) {
+      // Auto ON (only if manual is already on) → show UI
+      autoControlsDIV.style.display = "block";
+      // The permanent watcher will now flip the relay as moisture changes.
+    } else {
+      // Either Auto OFF or Manual is off → hide UI + reset
+      automaticToggle.checked = false;
+      autoControlsDIV.style.display = "none";
+      set(relayStatusRef, "off");
+      set(moistureSetRef, 0);
+    }
+  }
+}
+
+// 7) Relay-status UI listener
+onValue(relayStatusRef, snap => {
+  document.getElementById("relay_status")
+          .textContent = `Relay Status: ${snap.val()}`;
+});
+
+// 8) Hook up toggles on load
+document.addEventListener("DOMContentLoaded", () => {
+  manualToggle.addEventListener("change", toggles);
+  automaticToggle.addEventListener("change", toggles);
+});
+
+
+
+//------------------- end here ------------------------//
+
 
 
 // Function to fetch and display All sensor data
