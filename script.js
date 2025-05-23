@@ -80,7 +80,8 @@ function toggles(event) {
             set(relayStatusRef, "on"); // Update relay status in Firebase
         } else {
             set(relayStatusRef, "off");
-            automaticToggle.checked = false; // Update relay status in Firebase
+            automaticToggle.checked = false;
+            set(moisture_set_tobe, 0); // Update relay status in Firebase
         }
     } else if (event.target.id === "automatic_toggle") {
 
@@ -89,7 +90,7 @@ if (automaticToggle.checked && manualToggle.checked) {
   automatic_selector.style.display = "block";
 
   document.querySelector('#moisture_volume').addEventListener('input', function () {
-    const selectedValue = this.value;
+    let selectedValue = this.value;
     document.getElementById("moisture_volume_display").innerHTML = `Selected Moisture Value: ${selectedValue}`;
     set(moisture_set_tobe, selectedValue);
 
@@ -102,6 +103,7 @@ if (automaticToggle.checked && manualToggle.checked) {
           set(relayStatusRef, "on");
         } else {
           set(relayStatusRef, "off");
+          
         }
       }
     }).catch((error) => {
@@ -109,10 +111,13 @@ if (automaticToggle.checked && manualToggle.checked) {
     });
   });
 }
-
+else if(automaticToggle.checked == false){
+  set(moisture_set_tobe, 0);
+}
              // Update relay status in Firebase
          else {
             set(relayStatusRef, "off"); // Update relay status in Firebase
+            // set(moisture_set_tobe, 0);
         }    
         
     }
