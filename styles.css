@@ -155,7 +155,8 @@
   .fab-container {
     position: fixed;
     bottom: 6rem;
-    margin-bottom: 6%;
+    margin-bottom: 11%;
+    
     right: 3rem;
 
     z-index: 1000;
@@ -574,6 +575,7 @@
   align-items: center;
   text-align: center;
   font-size: 18px;
+  
 }
 
 #batteryStatus {
