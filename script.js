@@ -96,7 +96,7 @@ if (automaticToggle.checked && manualToggle.checked) {
     get(moisture_realtime).then((snapshot) => {
       if (snapshot.exists()) {
         const currentMoisture = snapshot.val();
-        if (selectedValue < currentMoisture) {
+        if (selectedValue > currentMoisture) {
           set(relayStatusRef, "on");
         } else {
           set(relayStatusRef, "off");
