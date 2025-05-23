@@ -60,7 +60,7 @@ const realtimeDb = getDatabase(app);
 
 // Get reference to relay status
 const relayStatusRef = ref(realtimeDb, "relay_status");
-const moisture_realtime = ref(realtimeDb, "moisture_realtime");
+const moisture_realtime = ref(realtimeDb, "moisture_realtime/moisture_realtime");
 const moisture_set_tobe = ref(realtimeDb, "moisture_set_tobe");
 
 
@@ -100,24 +100,27 @@ if (automaticToggle.checked && manualToggle.checked) {
         if (selectedValue < currentMoisture) {
           console.log("current : ",currentMoisture);
           console.log("selected : ",selectedValue);
+          
           set(relayStatusRef, "on");
         } else {
           set(relayStatusRef, "off");
+          set(moisture_set_tobe, 0);
           
         }
       }
+      if(automaticToggle.checked == false){
+        set(moisture_set_tobe, 0);
+        }
     }).catch((error) => {
       console.error("Error reading moisture value:", error);
     });
   });
 }
-else if(automaticToggle.checked == false){
-  set(moisture_set_tobe, 0);
-}
+
              // Update relay status in Firebase
          else {
             set(relayStatusRef, "off"); // Update relay status in Firebase
-            // set(moisture_set_tobe, 0);
+           set(moisture_set_tobe, 0);
         }    
         
     }
