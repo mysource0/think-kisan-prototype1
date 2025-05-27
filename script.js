@@ -63,6 +63,7 @@ const realtimeDb = getDatabase(app);
 const relayStatusRef      = ref(realtimeDb, "relay_status");
 const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
 const moistureSetRef      = ref(realtimeDb, "moisture_set_tobe");
+const relay_batteryref    = ref(realtimeDb, "relay_battery_percentage/relay_battery_percentage");
 
 
 // 2) Cache DOM nodes
@@ -72,6 +73,7 @@ const autoControlsDIV   = document.getElementById("automatic_selector");
 const slider            = document.getElementById("moisture_volume");
 const sliderDisplaySpan = document.getElementById("moisture_volume_display");
 const realtime_moisture = document.getElementById("realtime_moisture");
+const relay_battery_display = document.getElementById("relay_battery_display");
 
 // 3) Initial UI state (no DB reset!)
 autoControlsDIV.style.display = "none";  // hide the auto controls
@@ -180,10 +182,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ) Listen for changes and update the UI
 onValue(moistureRealtimeRef, snapshot => {
   const val = snapshot.exists() ? parseFloat(snapshot.val()) : 0;
-  realtime_moisture.textContent = `Current Moisture: ${val}`;
+  realtime_moisture.textContent = `Current Moisture: ${val}%💦`;
 });
 
-
+onValue(relay_batteryref, snapshot => {
+  const relay_battery = snapshot.exists() ? parseFloat(snapshot.val()) : 0;
+  relay_battery_display.textContent = `Relay Battery : ${relay_battery} 🔋 `;
+});
 
 });
 
