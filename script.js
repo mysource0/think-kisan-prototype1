@@ -59,11 +59,11 @@ const realtimeDb = getDatabase(app);
 
 //-------------- started here ---------------//
 
-
 // 1) Firebase refs
 const relayStatusRef      = ref(realtimeDb, "relay_status");
 const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
 const moistureSetRef      = ref(realtimeDb, "moisture_set_tobe");
+
 
 // 2) Cache DOM nodes
 const manualToggle      = document.getElementById("manual_toggle");
@@ -71,45 +71,46 @@ const automaticToggle   = document.getElementById("automatic_toggle");
 const autoControlsDIV   = document.getElementById("automatic_selector");
 const slider            = document.getElementById("moisture_volume");
 const sliderDisplaySpan = document.getElementById("moisture_volume_display");
+const realtime_moisture = document.getElementById("realtime_moisture");
 
-// 3) Initial UI & DB state
-autoControlsDIV.style.display = "none";   // hide the auto UI
-set(moistureSetRef, 0);                   // clear any old setpoint
+// 3) Initial UI state (no DB reset!)
+autoControlsDIV.style.display = "none";  // hide the auto controls
 
 // 4) Permanent moisture watcher
-//    Fires _on every_ value change in RTDB:
 onValue(moistureRealtimeRef, snap => {
   const current = parseFloat(snap.val()) || 0;
-  const setpt   = parseFloat(slider.value) || 0;
+  const setpt   = parseFloat(slider.value)  || 0;
 
-  // Only in *automatic* mode (and manual still on!)
   if (manualToggle.checked && automaticToggle.checked && setpt > 0) {
-    // flip relay based on your rule:
-    set(relayStatusRef, current < setpt ? "on" : "off");
+    // **CORRECTED**: setpt < current → ON, else OFF
+    set(relayStatusRef, setpt < current ? "on" : "off");
   }
 });
 
-// 5) Slider input → update DB + display
+// 5) Slider input → update DB setpoint + display + immediate relay check
 slider.addEventListener("input", () => {
   const val = parseFloat(slider.value) || 0;
   sliderDisplaySpan.textContent = `Selected Moisture Value: ${val}`;
   set(moistureSetRef, val);
-  // Immediately re-evaluate relay once more:
+
+  // **CORRECTED** immediate re-check:
   get(moistureRealtimeRef).then(snap => {
     const cur = parseFloat(snap.val()) || 0;
-    set(relayStatusRef, cur > val ? "on" : "off");
+    if (manualToggle.checked && automaticToggle.checked && val < cur) {
+      set(relayStatusRef, "on");
+    } else {
+      set(relayStatusRef, "off");
+    }
   });
 });
 
 // 6) Toggle handler
 function toggles(e) {
-  // — MANUAL switch —
+  // — Manual switch —
   if (e.target === manualToggle) {
     if (manualToggle.checked) {
-      // Manual ON → immediate relay ON, auto still off until user flips it
       set(relayStatusRef, "on");
     } else {
-      // Manual OFF → kill everything
       automaticToggle.checked = false;
       autoControlsDIV.style.display = "none";
       set(relayStatusRef, "off");
@@ -117,14 +118,11 @@ function toggles(e) {
     }
   }
 
-  // — AUTOMATIC switch —
+  // — Automatic switch —
   if (e.target === automaticToggle) {
     if (automaticToggle.checked && manualToggle.checked) {
-      // Auto ON (only if manual is already on) → show UI
       autoControlsDIV.style.display = "block";
-      // The permanent watcher will now flip the relay as moisture changes.
     } else {
-      // Either Auto OFF or Manual is off → hide UI + reset
       automaticToggle.checked = false;
       autoControlsDIV.style.display = "none";
       set(relayStatusRef, "off");
@@ -139,15 +137,59 @@ onValue(relayStatusRef, snap => {
           .textContent = `Relay Status: ${snap.val()}`;
 });
 
-// 8) Hook up toggles on load
-document.addEventListener("DOMContentLoaded", () => {
+
+
+// 8) On page load: sync state from Firebase, then hook handlers
+document.addEventListener("DOMContentLoaded", async () => {
+  // A) Fetch relay_status, setpoint, and current moisture in parallel
+  const [relaySnap, setSnap, moistureSnap] = await Promise.all([
+    get(relayStatusRef),
+    get(moistureSetRef),
+    get(moistureRealtimeRef)
+  ]);
+
+  const relayIsOn = relaySnap.exists() && relaySnap.val() === "on";
+  const setVal    = parseFloat(setSnap.val())                || 0;
+  const current   = parseFloat(moistureSnap.val())           || 0;
+
+  // B) Manual = ON if relay was ON OR there's a positive setpoint
+  manualToggle.checked = relayIsOn || setVal > 0;
+
+  // C) Automatic & slider if setVal > 0 AND manual is ON
+  if (manualToggle.checked && setVal > 0) {
+    automaticToggle.checked      = true;
+    autoControlsDIV.style.display = "block";
+    slider.value                 = setVal;
+    sliderDisplaySpan.textContent = `Selected Moisture Value: ${setVal}`;
+  } else {
+    automaticToggle.checked      = false;
+    autoControlsDIV.style.display = "none";
+  }
+
+  // D) Now apply your rule one time right at startup:
+  if (manualToggle.checked && automaticToggle.checked && setVal > 0) {
+    const shouldBeOn = setVal < current;
+    set(relayStatusRef, shouldBeOn ? "on" : "off");
+  }
+
+  // E) Hook up your change handlers
   manualToggle.addEventListener("change", toggles);
   automaticToggle.addEventListener("change", toggles);
+    
+  
+  // ) Listen for changes and update the UI
+onValue(moistureRealtimeRef, snapshot => {
+  const val = snapshot.exists() ? parseFloat(snapshot.val()) : 0;
+  realtime_moisture.textContent = `Current Moisture: ${val}`;
 });
 
 
 
+});
+
+
 //------------------- end here ------------------------//
+
 
 
 
