@@ -136,7 +136,7 @@ function toggles(e) {
 // 7) Relay-status UI listener
 onValue(relayStatusRef, snap => {
   document.getElementById("relay_status")
-          .textContent = `Relay Status: ${snap.val()}`;
+          .textContent = `Irrigation Status: ${snap.val()}`;
 });
 
 
@@ -400,10 +400,7 @@ async function displayLastRecentData() {
               <td style="padding: 8px;">Electrical Conductivity</td>
               <td style="padding: 8px;">${data.Electrical_Conductivity}</td>
             </tr>
-            <tr>
-              <td style="padding: 8px;">RSSI</td>
-              <td style="padding: 8px;">${data.RSSI}</td>
-            </tr>
+
 
           </tbody>
         </table>
