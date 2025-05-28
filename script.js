@@ -85,7 +85,7 @@ onValue(moistureRealtimeRef, snap => {
 
   if (manualToggle.checked && automaticToggle.checked && setpt > 0) {
     // **CORRECTED**: setpt < current → ON, else OFF
-    set(relayStatusRef, setpt < current ? "on" : "off");
+    set(relayStatusRef, setpt <= current ? "on" : "off");
   }
 });
 
@@ -98,7 +98,7 @@ slider.addEventListener("input", () => {
   // **CORRECTED** immediate re-check:
   get(moistureRealtimeRef).then(snap => {
     const cur = parseFloat(snap.val()) || 0;
-    if (manualToggle.checked && automaticToggle.checked && val < cur) {
+    if (manualToggle.checked && automaticToggle.checked && val <= cur) {
       set(relayStatusRef, "on");
     } else {
       set(relayStatusRef, "off");
@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // D) Now apply your rule one time right at startup:
   if (manualToggle.checked && automaticToggle.checked && setVal > 0) {
-    const shouldBeOn = setVal < current;
+    const shouldBeOn = setVal <= current;
     set(relayStatusRef, shouldBeOn ? "on" : "off");
   }
 
