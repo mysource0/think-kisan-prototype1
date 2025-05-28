@@ -1,16 +1,199 @@
+<!---https://mysource0.github.io/think-kisan-prototype1/-->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-   <meta http-equiv="refresh" content="5">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sensor Dashboard</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="dashboard.css">
 
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title></title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
 </head>
 <body>
+  <!-- Header Section -->
+  <header class="header">
+    <div class="header-content">
+      <h1 class="title">Operation Panel</h1>
+      <div class="search-container">
+        <button class="search-toggle">
+          <i class="fas fa-search"></i>
+        </button>
+        <div class="search-controls hidden">
+          <div class="search-options">
+            <label>
+              <input type="radio" name="search-type" value="name"> Name
+            </label>
+            <label>
+              <input type="radio" name="search-type" value="doc_id" checked> doc id
+            </label>
+            <label>
+              <input type="radio" name="search-type" value="location"> Location
+            </label>
+          </div>
+          <input type="text" class="search-input hidden" placeholder="Enter document ID...">
+          <button class="hidden btn search_button" onclick="searchDocumentById()">Search</button>
+        
+      </div>
+    </div>
+    <br>
 
-<h1>updating...</h1>
+  </header>
+<!-- 
+  Navigation
+  <nav class="navbar">
+    <ul class="nav-list">
+      <li> <button class="nav_buttons" id="home_button" onclick="displayLastRecentData()"> <a href="#"><i class="fas fa-home"></i> Home </a></button></li>
+      <li> <button class="nav_buttons" id="database_opereation_button" onclick="display_db_reading_operations()"><a href="#"><i class="fas fa-database"></i> Records History</a></button></li>
+      <li> <button class="nav_buttons" id="exportDataBtn"><a href="#"><i class="fas fa-download"></i> Download PDF</a></button></li>
+      <li> <button class="nav_buttons" id="realtime_data_button"><a href="#"><i class="fas fa-chart-bar"></i> Real-Time Data</a></button></li>
+    
+    </ul>
+  </nav> -->
+
+  <div id="batteryStatus" class="data-card updated">
+  
+    <p class="battery_container"><p class="battery_block" ><strong>Receiver Battery:</strong> <span id="receiverBattery">Loading...</span>%</p>
+    <p class="battery_block"><strong>Transmitter Battery:</strong> <span id="transmitterBattery">Loading...</span>%</p></p>
+
+    <div id="show_upcoming_realtime_data"></div>
+  </div>
 
 
+
+
+  <!-- Main Content -->
+  <main class="main-content">
+
+
+
+
+
+
+
+<!--- for searched output-->
+<section class="data-card updated" style="display: none;" id="search_results_section">
+  <h2><i class="fas fa-search"></i> Searched Results  </h2>
+  <div class="card-content">
+    <div id="search_results">
+        
+  </div>
+
+  
+</section>
+
+<!-------------creating document feed back-->
+<section id="doc_updated_feedback">
+  <div class="data-card" id="doc_update_results">      <h1><div class="relay-status" id="relay_status"></div>  </h1>
+      <b> <div class="relay-status" id="relay_battery_display"></div></b>
+     <b> <div id="realtime_moisture" style="color: rgb(0, 103, 0);" class="relay-status"></div></b></div>
+</section>
+<section class="data-card updated" id="last_recent_updated_section">
+  
+
+    <hr width="100%">
+    <section>
+
+     
+      <div class="relay-card data-card">
+       
+        <div class="relay-automatic"  style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+          <h2 style="margin-bottom: 10px;">Irrigation System</h2>
+          <label class="switch">
+          <input type="checkbox" id="manual_toggle">
+          <span class="slider round"></span>
+          </label>
+        </div>
+
+        <div class="relay-manual" >  
+          <br>
+          <hr><h2>Automatic</h2>      
+          <label class="switch" class="automatic_switch" style="margin-left:30px;">
+          <input type="checkbox" id="automatic_toggle" > 
+            <span class="slider round"></span>
+          </label>
+        </div><div id="automatic_selector"> <br> <label for="moisture_volume" id="moisture_volume_display">Selected Moisture : 0</label>
+              <input type="range" min="0" max="90" step="1" value="0" id="moisture_volume"></div>
+              
+        
+      </div>
+    </section>
+</section>
+<!-- last recent updaetd data-->
+ <!----weather api--> <div>  <div id="weatherapi-weather-widget-2" ></div><script type='text/javascript' src='https://www.weatherapi.com/weather/widget.ashx?loc=1108913&wid=2&tu=1&div=weatherapi-weather-widget-2' async></script><noscript><a href="https://www.weatherapi.com/weather/q/bhimavaram-1108913" alt="Hour by hour Bhimavaram weather"></a></noscript></div> 
+
+
+
+
+  
+
+  </main>
+
+
+
+
+
+
+
+
+<script>
+    let search_r = document.getElementById("search_results_section");
+    function Search_close(){
+        search_r.style.display="none";
+    }
+</script>
+
+<script>
+  // Add Android Bridge polyfill for web browsers
+  if (typeof AndroidBridge === 'undefined') {
+      window.AndroidBridge = {
+          savePDF: (base64Data, fileName) => {
+              const link = document.createElement('a');
+              link.href = `data:application/pdf;base64,${base64Data}`;
+              link.download = fileName;
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+          }
+      };
+  }
+  </script>
+  <script type="module" src="script.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const searchToggle = document.querySelector('.search-toggle');
+  const title = document.querySelector('.title');
+  const searchControls = document.querySelector('.search-controls');
+  const fabMain = document.querySelector('.fab-main');
+  const fabOptions = document.querySelector('.fab-options');
+
+  // Search toggle
+  searchToggle.addEventListener('click', () => {
+    title.classList.toggle('hidden');
+    searchControls.classList.toggle('active');
+  });
+
+  // FAB toggle
+  fabMain.addEventListener('click', () => {
+    fabOptions.classList.toggle('active');
+  });
+
+  // Close on click outside
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-container')) {
+      title.classList.remove('hidden');
+      searchControls.classList.remove('active');
+    }
+    if (!e.target.closest('.fab-container')) {
+      fabOptions.classList.remove('active');
+    }
+  });
+});
+</script>
+<script type="module" src="script.js"></script>
 </body>
 </html>
