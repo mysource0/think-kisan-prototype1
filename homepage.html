@@ -17,7 +17,7 @@
   <!-- Header Section -->
   <header class="header">
     <div class="header-content">
-      <h1 class="title">Sensor Dashboard</h1>
+      <h1 class="title">Control Panel</h1>
       <div class="search-container">
         <button class="search-toggle">
           <i class="fas fa-search"></i>
@@ -96,7 +96,6 @@
   <div class="data-card" id="doc_update_results"></div>
 </section>
 <!-- last recent updaetd data-->
- <!----weather api-->    <div id="weatherapi-weather-widget-2"></div><script type='text/javascript' src='https://www.weatherapi.com/weather/widget.ashx?loc=1108913&wid=2&tu=1&div=weatherapi-weather-widget-2' async></script><noscript><a href="https://www.weatherapi.com/weather/q/bhimavaram-1108913" alt="Hour by hour Bhimavaram weather"></a></noscript>
 
 <section class="data-card updated" id="last_recent_updated_section">
     <h2><i class="fas fa-history"></i> Last Updated</h2>
@@ -168,27 +167,14 @@
     <br>
     <br><hr width="100%">
     <section>
-      <h1><div class="relay-status" id="relay_status"></div>  </h1>
-      <b> <div class="relay-status" id="relay_battery_display"></div></b>
-     <b> <div id="realtime_moisture" style="color: rgb(0, 103, 0);" class="relay-status"></div></b>
+
      
       <div class="relay-card data-card">
-       
-        <div class="relay-automatic">
-          <h2>Relay Supply</h2>
-          <label class="switch">
-          <input type="checkbox" id="manual_toggle">
-          <span class="slider round"></span>
-          </label>
-        </div>
+
 
         <div class="relay-manual">  
-          <br>
-          <hr><h2>Automatic</h2>      
-          <label class="switch" class="automatic_switch" style="margin-left:30px;">
-          <input type="checkbox" id="automatic_toggle" > 
-            <span class="slider round"></span>
-          </label>
+    
+
         <div id="automatic_selector"> <br> <label for="moisture_volume" id="moisture_volume_display">Selected Moisture : 0</label>
               <input type="range" min="0" max="90" step="1" value="0" id="moisture_volume"></div>
               
