@@ -182,7 +182,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   // ) Listen for changes and update the UI
 onValue(moistureRealtimeRef, snapshot => {
   const val = snapshot.exists() ? parseFloat(snapshot.val()) : 0;
-  realtime_moisture.textContent = `Current Moisture: ${val}%💦`;
+  realtime_moisture.textContent = `Current Moisture: ${val}%`;
 });
 
 onValue(relay_batteryref, snapshot => {
@@ -257,10 +257,6 @@ export async function getSensorData() {
     <tr>
       <td><strong>Electrical Conductivity:</strong></td>
       <td>${data.Electrical_Conductivity}</td>
-    </tr>
-    <tr>
-      <td><strong>RSSI:</strong></td>
-      <td>${data.RSSI}</td>
     </tr>
     <tr>
       <td><strong>Timestamp:</strong></td>
