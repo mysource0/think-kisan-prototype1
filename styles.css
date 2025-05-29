@@ -561,14 +561,6 @@
 }
 
 
-.battery_block {
-  display: inline;
-
-}
-.battery_container{
-  text-align: center;
-}
-
 .manual_create_button_div {
   color: #2b9044;
   justify-content: center;
@@ -681,4 +673,18 @@ input:checked + .slider:before {
   cursor: pointer;
   position: relative;
   z-index: 5;
+}
+
+.battery {
+  display: block;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap:3px;
+  align-items: center;
+}
+.battery_block {
+  font-weight: bold;
+  font-size: 16px;
+  border: 1px solid rgb(214, 202, 202);
 }
