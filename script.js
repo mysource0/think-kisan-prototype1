@@ -3,41 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { serverTimestamp, getFirestore, getDoc, collection, setDoc, getDocs, doc as docRef } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-// nav buttons
 
-// let nav_last_recent_button = document.getElementById("last_recent_updated_section");
-//let nav_search_operation_button = document.getElementById("search_results_section");
-// let nav_database_reading_operations_button = document.getElementById("range_data_operations");
-
-// nav_last_recent_button.style.display="block";
-// nav_search_operation_button.style.display="none";
-// nav_database_reading_operations_button.style.display="none"
-
-// function displayLastRecentData(){
-//   if(nav_last_recent_button.style.display=="none"){
-//     nav_last_recent_button.style.display="block";
-//     nav_search_operation_button.style.display="none";
-//     nav_database_reading_operations_button.style.display="none"
-//   }
-// }
-
-// function showdatabaseoperations(){
-//   if(nav_database_reading_operations_button.style.display=="none"){
-//     nav_database_reading_operations_button.style.display="block";
-//     nav_last_recent_button.style.display="none";  // Fixed typo here
-//     nav_search_operation_button.style.display="none";
-//   }
-// }
-// document.addEventListener("DOMContentLoaded", function () {
-//   window.showpdfgenerator = function () {
-//     if(document.getElementById("pdfgeneratingsection").style.display == "none"){
-//       document.getElementById("pdfgeneratingsection").style.display = "block";
-//       document.getElementById("last_recent_updated_section").style.display = "none";
-//       document.getElementById("range_data_operations").style.display = "none";
-//     }
-    
-//   };
-// });
 
 
 // Firebase configuration (replace with your actual config)
@@ -59,21 +25,70 @@ const realtimeDb = getDatabase(app);
 
 //-------------- started here ---------------//
 
-// 1) Firebase refs
-const relayStatusRef      = ref(realtimeDb, "relay_status");
-const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
-const moistureSetRef      = ref(realtimeDb, "moisture_set_tobe");
-const relay_batteryref    = ref(realtimeDb, "relay_battery_percentage/relay_battery_percentage");
+// 1) Firebase refs values
+const relayStatusRef            = ref(realtimeDb, "relay_status");
+const moistureRealtimeRef       = ref(realtimeDb, "moisture_realtime/moisture_realtime");
+const moistureSetRef            = ref(realtimeDb, "moisture_set_tobe");
+
+///battery and voltage section
+
+const relay_batteryref             = ref(realtimeDb, "relay_battery/relay_percentage");
+const relaybattery_voltageref      = ref(realtimeDb, "relay-battery/relay_voltage");
+const transmeterbatteryref         = ref(realtimeDb, "tx_Battery/tx_percent");
+const transmeterbattery_voltageref = ref(realtimeDb, "tx_Battery/tx_voltage");
+const receiverbatteryref           = ref(realtimeDb, "receiver_battery/reciver_percentage");
+const receiverbattery_voltageref   = ref(realtimeDb, "receiver_battery/receiver_voltage");
 
 
 // 2) Cache DOM nodes
-const manualToggle      = document.getElementById("manual_toggle");
-const automaticToggle   = document.getElementById("automatic_toggle");
-const autoControlsDIV   = document.getElementById("automatic_selector");
-const slider            = document.getElementById("moisture_volume");
-const sliderDisplaySpan = document.getElementById("moisture_volume_display");
-const realtime_moisture = document.getElementById("realtime_moisture");
-const relay_battery_display = document.getElementById("relay_battery_display");
+const manualToggle              = document.getElementById("manual_toggle");
+const automaticToggle           = document.getElementById("automatic_toggle");
+const autoControlsDIV           = document.getElementById("automatic_selector");
+const slider                    = document.getElementById("moisture_volume");
+const sliderDisplaySpan         = document.getElementById("moisture_volume_display");
+const realtime_moisture         = document.getElementById("realtime_moisture");
+
+
+const relay_battery_display     = document.getElementById("relay_battery_display");
+const relaybattery_voltage      = document.getElementById("relay_battery_voltage");
+const transmeterbattery         = document.getElementById("transmeterbattery");
+const transmeterbattery_voltage = document.getElementById("transmeterbattery_voltage");
+const receiverbattery           = document.getElementById("receiverbatter");
+const receiverbattery_voltage   = document.getElementById("receiverbatter_voltage");
+
+
+///////battery percentage fectching
+
+// Relay Battery Data
+onValue(ref(realtimeDb, "relay_battery"), snapshot => {
+  const data = snapshot.val() || {};
+  const relayPercentage = parseFloat(data.relay_percentage || 0);
+  const relayVoltage = parseFloat(data.relay_voltage || 0);
+
+  relay_battery_display.textContent = `Rl_B : ${relayPercentage}% 🔋 `;
+  relaybattery_voltage.textContent = `Rl_V : ${relayVoltage} V ⚡`;
+});
+
+// Transmeter Battery Data
+onValue(ref(realtimeDb, "tx_Battery"), snapshot => {
+  const data = snapshot.val() || {};
+  const txPercent = parseFloat(data.tx_percent || 0);
+  const txVoltage = parseFloat(data.tx_voltage || 0);
+
+  transmeterbattery.textContent = `Tm_B : ${txPercent}% 🔋 `;
+  transmeterbattery_voltage.textContent = `Tm_V : ${txVoltage} V ⚡`;
+});
+
+// Receiver Battery Data
+onValue(ref(realtimeDb, "receiver_battery"), snapshot => {
+  const data = snapshot.val() || {};
+  const receiverPercent = parseFloat(data.reciver_percentage || 0);
+  const receiverVoltage = parseFloat(data.receiver_voltage || 0);
+
+  receiverbattery.textContent = `Rc_B : ${receiverPercent}% 🔋 `;
+  receiverbattery_voltage.textContent = `Rc_V : ${receiverVoltage} V ⚡`;
+});
+
 
 // 3) Initial UI state (no DB reset!)
 autoControlsDIV.style.display = "none";  // hide the auto controls
@@ -185,10 +200,7 @@ onValue(moistureRealtimeRef, snapshot => {
   realtime_moisture.textContent = `Current Moisture: ${val}%`;
 });
 
-onValue(relay_batteryref, snapshot => {
-  const relay_battery = snapshot.exists() ? parseFloat(snapshot.val()) : 0;
-  relay_battery_display.textContent = `Relay Battery : ${relay_battery} 🔋 `;
-});
+
 
 });
 
