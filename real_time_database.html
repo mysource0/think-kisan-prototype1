@@ -53,13 +53,36 @@
     
     </ul>
   </nav> -->
+  <div id="batteryStatus" class="data-card updated battery"> 
 
-  <div id="batteryStatus" class="data-card updated">
-  
-    <p class="battery_container"><p class="battery_block" ><strong>Receiver Battery:</strong> <span id="receiverBattery">Loading...</span>%</p>
-    <p class="battery_block"><strong>Transmitter Battery:</strong> <span id="transmitterBattery">Loading...</span>%</p></p>
+<table border="1" style="width: 90%; text-align: center;">
+  <tr>
+    <td>
+      <div class="battery_block" id="transmeterbattery"></div>
+    </td>
+    <td>
+      <div class="battery_block" id="transmeterbattery_voltage"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="battery_block" id="receiverbatter"></div>
+    </td>
+    <td>
+      <div class="battery_block" id="receiverbatter_voltage"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="battery_block" id="relay_battery_display"></div>
+    </td>
+    <td>
+      <div class="battery_block" id="relay_battery_voltage"></div>
+    </td>
+  </tr>
+</table>
 
-    <div id="show_upcoming_realtime_data"></div>
+
   </div>
 
 
@@ -88,7 +111,6 @@
 <!-------------creating document feed back-->
 <section id="doc_updated_feedback">
   <div class="data-card" id="doc_update_results">      <h1><div class="relay-status" id="relay_status"></div>  </h1>
-      <b> <div class="relay-status" id="relay_battery_display"></div></b>
      <b> <div id="realtime_moisture" style="color: rgb(0, 103, 0);" class="relay-status"></div></b></div>
 </section>
 <section class="data-card updated" id="last_recent_updated_section">
