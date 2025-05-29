@@ -53,13 +53,37 @@
     
     </ul>
   </nav> -->
-
-  <div id="batteryStatus" class="data-card updated">
   
-    <p class="battery_container"><p class="battery_block" ><strong>Receiver Battery:</strong> <span id="receiverBattery">Loading...</span>%</p>
-    <p class="battery_block"><strong>Transmitter Battery:</strong> <span id="transmitterBattery">Loading...</span>%</p></p>
+  <div id="batteryStatus" class="data-card updated battery"> 
 
-    <div id="show_upcoming_realtime_data"></div>
+<table border="1" style="width: 90%; text-align: center;">
+  <tr>
+    <td>
+      <div class="battery_block" id="transmeterbattery"></div>
+    </td>
+    <td>
+      <div class="battery_block" id="transmeterbattery_voltage"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="battery_block" id="receiverbatter"></div>
+    </td>
+    <td>
+      <div class="battery_block" id="receiverbatter_voltage"></div>
+    </td>
+  </tr>
+  <tr>
+    <td>
+      <div class="battery_block" id="relay_battery_display"></div>
+    </td>
+    <td>
+      <div class="battery_block" id="relay_battery_voltage"></div>
+    </td>
+  </tr>
+</table>
+
+
   </div>
 
 
