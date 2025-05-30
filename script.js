@@ -25,105 +25,101 @@ const realtimeDb = getDatabase(app);
 
 //-------------- started here ---------------//
 
-// 1) Firebase refs values
-const relayStatusRef            = ref(realtimeDb, "relay_status");
-const moistureRealtimeRef       = ref(realtimeDb, "moisture_realtime/moisture_realtime");
-const moistureSetRef            = ref(realtimeDb, "moisture_set_tobe");
+// ================== 1) Firebase References ==================
+const relayStatusRef      = ref(realtimeDb, "relay_status");
+const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
+const moistureSetRef      = ref(realtimeDb, "moisture_set_tobe");
 
-///battery and voltage section
-
-const relay_batteryref             = ref(realtimeDb, "relay_battery/relay_percentage");
-const relaybattery_voltageref      = ref(realtimeDb, "relay-battery/relay_voltage");
-const transmeterbatteryref         = ref(realtimeDb, "tx_Battery/tx_percent");
-const transmeterbattery_voltageref = ref(realtimeDb, "tx_Battery/tx_voltage");
-const receiverbatteryref           = ref(realtimeDb, "receiver_battery/reciver_percentage");
-const receiverbattery_voltageref   = ref(realtimeDb, "receiver_battery/receiver_voltage");
-
-
-// 2) Cache DOM nodes
-const manualToggle              = document.getElementById("manual_toggle");
-const automaticToggle           = document.getElementById("automatic_toggle");
-const autoControlsDIV           = document.getElementById("automatic_selector");
-const slider                    = document.getElementById("moisture_volume");
-const sliderDisplaySpan         = document.getElementById("moisture_volume_display");
-const realtime_moisture         = document.getElementById("realtime_moisture");
+// Battery & voltage references
+const relayBattPercRef    = ref(realtimeDb, "relay_battery/relay_percentage");
+const relayBattVoltRef    = ref(realtimeDb, "relay_battery/relay_voltage");
+const txBattPercRef       = ref(realtimeDb, "tx_Battery/tx_percent");
+const txBattVoltRef       = ref(realtimeDb, "tx_Battery/tx_voltage");
+const rxBattPercRef       = ref(realtimeDb, "receiver_battery/reciver_percentage");
+const rxBattVoltRef       = ref(realtimeDb, "receiver_battery/receiver_voltage");
 
 
-const relay_battery_display     = document.getElementById("relay_battery_display");
-const relaybattery_voltage      = document.getElementById("relay_battery_voltage");
-const transmeterbattery         = document.getElementById("transmeterbattery");
-const transmeterbattery_voltage = document.getElementById("transmeterbattery_voltage");
-const receiverbattery           = document.getElementById("receiverbatter");
-const receiverbattery_voltage   = document.getElementById("receiverbatter_voltage");
+// ================== 2) Cache DOM Nodes ==================
+const manualToggle         = document.getElementById("manual_toggle");
+const automaticToggle      = document.getElementById("automatic_toggle");
+const autoControlsDIV      = document.getElementById("automatic_selector");
+
+const slider               = document.getElementById("moisture_volume");
+const sliderDisplaySpan    = document.getElementById("moisture_volume_display");
+const realtimeMoistureEl   = document.getElementById("realtime_moisture");
+
+const relayBattDispEl      = document.getElementById("relay_battery_display");
+const relayBattVoltEl      = document.getElementById("relay_battery_voltage");
+const txBattDispEl         = document.getElementById("transmeterbattery");
+const txBattVoltEl         = document.getElementById("transmeterbattery_voltage");
+const rxBattDispEl         = document.getElementById("receiverbatter");
+const rxBattVoltEl         = document.getElementById("receiverbatter_voltage");
 
 
-///////battery percentage fectching
-
-// Relay Battery Data
-onValue(ref(realtimeDb, "relay_battery"), snapshot => {
-  const data = snapshot.val() || {};
-  const relayPercentage = parseFloat(data.relay_percentage || 0);
-  const relayVoltage = parseFloat(data.relay_voltage || 0);
-
-  relay_battery_display.textContent = `Rl_B : ${relayPercentage}% 🔋 `;
-  relaybattery_voltage.textContent = `Rl_V : ${relayVoltage} V ⚡`;
-});
-
-// Transmeter Battery Data
-onValue(ref(realtimeDb, "tx_Battery"), snapshot => {
-  const data = snapshot.val() || {};
-  const txPercent = parseFloat(data.tx_percent || 0);
-  const txVoltage = parseFloat(data.tx_voltage || 0);
-
-  transmeterbattery.textContent = `Tm_B : ${txPercent}% 🔋 `;
-  transmeterbattery_voltage.textContent = `Tm_V : ${txVoltage} V ⚡`;
-});
-
-// Receiver Battery Data
-onValue(ref(realtimeDb, "receiver_battery"), snapshot => {
-  const data = snapshot.val() || {};
-  const receiverPercent = parseFloat(data.reciver_percentage || 0);
-  const receiverVoltage = parseFloat(data.receiver_voltage || 0);
-
-  receiverbattery.textContent = `Rc_B : ${receiverPercent}% 🔋 `;
-  receiverbattery_voltage.textContent = `Rc_V : ${receiverVoltage} V ⚡`;
-});
-
-
-// 3) Initial UI state (no DB reset!)
-autoControlsDIV.style.display = "none";  // hide the auto controls
-
-// 4) Permanent moisture watcher
-onValue(moistureRealtimeRef, snap => {
-  const current = parseFloat(snap.val()) || 0;
-  const setpt   = parseFloat(slider.value)  || 0;
-
-  if (manualToggle.checked && automaticToggle.checked && setpt > 0) {
-    // **CORRECTED**: setpt < current → ON, else OFF
-    set(relayStatusRef, setpt <= current ? "on" : "off");
+// ================== 3) Helper: update relay based on current & setpoint ==================
+async function updateRelay(currentValue, setpointValue) {
+  if (manualToggle.checked && automaticToggle.checked && setpointValue > 0) {
+    const shouldBeOn = currentValue <= setpointValue;
+    await set(relayStatusRef, shouldBeOn ? "on" : "off");
   }
+}
+
+
+// ================== 4) Battery Data Listeners ==================
+onValue(relayBattPercRef.parent, snap => {
+  const data = snap.val() || {};
+  relayBattDispEl.textContent = `Rl_B : ${data.relay_percentage || 0}% 🔋`;
+  relayBattVoltEl.textContent = `Rl_V : ${data.relay_voltage || 0} V ⚡`;
 });
 
-// 5) Slider input → update DB setpoint + display + immediate relay check
-slider.addEventListener("input", () => {
+onValue(txBattPercRef.parent, snap => {
+  const data = snap.val() || {};
+  txBattDispEl.textContent  = `Tm_B : ${data.tx_percent || 0}% 🔋`;
+  txBattVoltEl.textContent = `Tm_V : ${data.tx_voltage || 0} V ⚡`;
+});
+
+onValue(rxBattPercRef.parent, snap => {
+  const data = snap.val() || {};
+  rxBattDispEl.textContent  = `Rc_B : ${data.reciver_percentage || 0}% 🔋`;
+  rxBattVoltEl.textContent = `Rc_V : ${data.receiver_voltage || 0} V ⚡`;
+});
+
+
+// ================== 5) Moisture Setpoint Listener ==================
+onValue(moistureSetRef, snap => {
+  const val = parseFloat(snap.val()) || 0;
+  slider.value = val;
+  sliderDisplaySpan.textContent = `Selected Moisture Value: ${val}`;
+});
+
+
+// ================== 6) Moisture Listener (real-time) ==================
+onValue(moistureRealtimeRef, async snap => {
+  const current = parseFloat(snap.val()) || 0;
+  realtimeMoistureEl.textContent = `Current Moisture: ${current}%`;
+
+  const setSnap = await get(moistureSetRef);
+  const setpt = parseFloat(setSnap.val()) || 0;
+
+  updateRelay(current, setpt);
+});
+
+
+// ================== 7) Slider Input Handler ==================
+slider.addEventListener("input", async () => {
   const val = parseFloat(slider.value) || 0;
   sliderDisplaySpan.textContent = `Selected Moisture Value: ${val}`;
-  set(moistureSetRef, val);
+  await set(moistureSetRef, val);
 
-  // **CORRECTED** immediate re-check:
-  get(moistureRealtimeRef).then(snap => {
-    const cur = parseFloat(snap.val()) || 0;
-    if (manualToggle.checked && automaticToggle.checked && val >= cur) {
-      set(relayStatusRef, "on");
-    } else {
-      set(relayStatusRef, "off");
-    }
-  });
+  const snap = await get(moistureRealtimeRef);
+  const current = parseFloat(snap.val()) || 0;
+
+  updateRelay(current, val);
 });
 
-// 6) Toggle handler
-function toggles(e) {
-  // — Manual switch —
+
+// ================== 8) Toggle Handler ==================
+function handleToggle(e) {
   if (e.target === manualToggle) {
     if (manualToggle.checked) {
       set(relayStatusRef, "on");
@@ -135,7 +131,6 @@ function toggles(e) {
     }
   }
 
-  // — Automatic switch —
   if (e.target === automaticToggle) {
     if (automaticToggle.checked && manualToggle.checked) {
       autoControlsDIV.style.display = "block";
@@ -148,62 +143,45 @@ function toggles(e) {
   }
 }
 
-// 7) Relay-status UI listener
+
+// ================== 9) Relay Status UI Listener ==================
 onValue(relayStatusRef, snap => {
-  document.getElementById("relay_status")
-          .textContent = `Irrigation Status: ${snap.val()}`;
+  document.getElementById("relay_status").textContent = `Irrigation Status: ${snap.val()}`;
 });
 
 
-
-// 8) On page load: sync state from Firebase, then hook handlers
+// ================== 10) Initialization on Page Load ==================
 document.addEventListener("DOMContentLoaded", async () => {
-  // A) Fetch relay_status, setpoint, and current moisture in parallel
+  autoControlsDIV.style.display = "none";
+
   const [relaySnap, setSnap, moistureSnap] = await Promise.all([
     get(relayStatusRef),
     get(moistureSetRef),
     get(moistureRealtimeRef)
   ]);
 
-  const relayIsOn = relaySnap.exists() && relaySnap.val() === "on";
-  const setVal    = parseFloat(setSnap.val())                || 0;
-  const current   = parseFloat(moistureSnap.val())           || 0;
+  const relayOn = relaySnap.exists() && relaySnap.val() === "on";
+  const setVal = parseFloat(setSnap.val()) || 0;
+  const current = parseFloat(moistureSnap.val()) || 0;
 
-  // B) Manual = ON if relay was ON OR there's a positive setpoint
-  manualToggle.checked = relayIsOn || setVal > 0;
+  manualToggle.checked = relayOn || setVal > 0;
 
-  // C) Automatic & slider if setVal > 0 AND manual is ON
   if (manualToggle.checked && setVal > 0) {
-    automaticToggle.checked      = true;
+    automaticToggle.checked = true;
     autoControlsDIV.style.display = "block";
-    slider.value                 = setVal;
+    slider.value = setVal;
     sliderDisplaySpan.textContent = `Selected Moisture Value: ${setVal}`;
-  } else {
-    automaticToggle.checked      = false;
-    autoControlsDIV.style.display = "none";
+  }
+// console.log("set val",setVal);
+// console.log("currentval", current);
+// console.log("setval", setVal);
+  if (manualToggle.checked && automaticToggle.checked) {
+    set(relayStatusRef, current <= setVal ? "on" : "off");
   }
 
-  // D) Now apply your rule one time right at startup:
-  if (manualToggle.checked && automaticToggle.checked && setVal > 0) {
-    const shouldBeOn = setVal <= current;
-    set(relayStatusRef, shouldBeOn ? "on" : "off");
-  }
-
-  // E) Hook up your change handlers
-  manualToggle.addEventListener("change", toggles);
-  automaticToggle.addEventListener("change", toggles);
-    
-  
-  // ) Listen for changes and update the UI
-onValue(moistureRealtimeRef, snapshot => {
-  const val = snapshot.exists() ? parseFloat(snapshot.val()) : 0;
-  realtime_moisture.textContent = `Current Moisture: ${val}%`;
+  manualToggle.addEventListener("change", handleToggle);
+  automaticToggle.addEventListener("change", handleToggle);
 });
-
-
-
-});
-
 
 //------------------- end here ------------------------//
 
