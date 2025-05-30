@@ -89,70 +89,65 @@
 
 
   <!-- Main Content -->
-  <main class="main-content">
+<main class="main-content">
+  <!-- For searched output -->
+  <section id="search_results_section" class="data-card updated" style="display: none;">
+    <h2><i class="fas fa-search"></i> Searched Results</h2>
+    <div class="card-content">
+      <div id="search_results"></div>
+    </div>
+  </section>
 
+  <!-- Document feedback -->
+  <section id="doc_updated_feedback">
+    <div id="doc_update_results" class="data-card">
+      <h1>
+        <div id="relay_status" class="relay-status"></div>
+      </h1>
+      <b>
+        <div id="realtime_moisture" class="relay-status" style="color: rgb(0, 103, 0);"></div>
+      </b>
+    </div>
+  </section>
 
-
-
-
-
-
-<!--- for searched output-->
-<section class="data-card updated" style="display: none;" id="search_results_section">
-  <h2><i class="fas fa-search"></i> Searched Results  </h2>
-  <div class="card-content">
-    <div id="search_results">
-        
-  </div>
-
-  
-</section>
-
-<!-------------creating document feed back-->
-<section id="doc_updated_feedback">
-  <div class="data-card" id="doc_update_results">      <h1><div class="relay-status" id="relay_status"></div>  </h1>
-     <b> <div id="realtime_moisture" style="color: rgb(0, 103, 0);" class="relay-status"></div></b></div>
-</section>
-<section class="data-card updated" id="last_recent_updated_section">
-  
-
+  <!-- Irrigation controls -->
+  <section id="last_recent_updated_section" class="data-card updated">
     <hr width="100%">
-    <section>
-
-     
-      <div class="relay-card data-card">
-       
-        <div class="relay-automatic"  style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <h2 style="margin-bottom: 10px;">Irrigation System</h2>
-          <label class="switch">
+    <div class="relay-card data-card">
+      <div class="relay-automatic" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
+        <h2 style="margin-bottom: 10px;">Irrigation System</h2>
+        <label class="switch">
           <input type="checkbox" id="manual_toggle">
           <span class="slider round"></span>
-          </label>
-        </div>
-
-        <div class="relay-manual" >  
-          <br>
-          <hr><h2>Automatic</h2>      
-          <label class="switch" class="automatic_switch" style="margin-left:30px;">
-          <input type="checkbox" id="automatic_toggle" > 
-            <span class="slider round"></span>
-          </label>
-        </div><div id="automatic_selector"> <br> <label for="moisture_volume" id="moisture_volume_display">Selected Moisture : 0</label>
-              <input type="range" min="0" max="100" step="0.1" value="0" id="moisture_volume"></div>
-              
-        
+        </label>
       </div>
-    </section>
-</section>
-<!-- last recent updaetd data-->
- <!----weather api--> <div>  <div id="weatherapi-weather-widget-2" ></div><script type='text/javascript' src='https://www.weatherapi.com/weather/widget.ashx?loc=1108913&wid=2&tu=1&div=weatherapi-weather-widget-2' async></script><noscript><a href="https://www.weatherapi.com/weather/q/bhimavaram-1108913" alt="Hour by hour Bhimavaram weather"></a></noscript></div> 
+<br>
+      <div class="relay-manual">
+        <hr>
+        <h2>Automatic</h2>
+        <label class="switch automatic_switch" style="margin-left: 30px;">
+          <input type="checkbox" id="automatic_toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
 
+      <div id="automatic_selector">
+        <br>
+        <label for="moisture_volume" id="moisture_volume_display">Selected Moisture: 0</label>
+        <input type="range" id="moisture_volume" min="0" max="100" step="0.1" value="0">
+      </div>
+    </div>
+  </section>
 
-
-
-  
-
-  </main>
+  <!-- Weather widget -->
+  <div>
+    <div id="weatherapi-weather-widget-2"></div>
+    <script async src="https://www.weatherapi.com/weather/widget.ashx?loc=1108913&wid=2&tu=1&div=weatherapi-weather-widget-2" type="text/javascript"></script>
+    <noscript>
+      <a href="https://www.weatherapi.com/weather/q/bhimavaram-1108913" alt="Hour by hour Bhimavaram weather"></a>
+    </noscript>
+  </div>
+</main>
 
 
 
