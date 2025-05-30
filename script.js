@@ -113,7 +113,7 @@ slider.addEventListener("input", () => {
   // **CORRECTED** immediate re-check:
   get(moistureRealtimeRef).then(snap => {
     const cur = parseFloat(snap.val()) || 0;
-    if (manualToggle.checked && automaticToggle.checked && val <= cur) {
+    if (manualToggle.checked && automaticToggle.checked && val >= cur) {
       set(relayStatusRef, "on");
     } else {
       set(relayStatusRef, "off");
