@@ -41,6 +41,8 @@
 <body>
     <div class="fb">
         <div id="value_now"></div><br>
+        <div id="automatic_moisture"></div><br>
+        <div id="relay_status"></div><br>
         <label>Enter Moisture : </label>
         <input type="number" id="set_moisture_realtime" placeholder="realtime">
         <button onclick="set_moisture_in_firebase()">Set Moisture</button>
@@ -68,13 +70,27 @@
   const realtimeDb = getDatabase(app); 
 
   const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
+  const moistureSetRef      = ref(realtimeDb, "moisture_set_tobe");
+  const relayStatusRef      = ref(realtimeDb, "relay_status");
+
   const set_moisture_realtime = document.getElementById("set_moisture_realtime");
   const value_now = document.getElementById("value_now");
+  const automatic_moisture = document.getElementById("automatic_moisture");
+  const relay_status = document.getElementById("relay_status");
 
   // Live updates
   onValue(moistureRealtimeRef, (snap) => {
     const current = parseFloat(snap.val()) || 0;
     value_now.textContent = `Current Moisture: ${current}%`;
+  });
+
+    onValue(moistureSetRef, (snap) => {
+    const current = parseFloat(snap.val()) || 0;
+    automatic_moisture.textContent = `automatic Moisture: ${current}%`;
+  });
+
+    onValue(relayStatusRef, (snap) => {
+    relay_status.textContent = `Current relay status: ${snap.val()}`;
   });
 
   // Set moisture value
