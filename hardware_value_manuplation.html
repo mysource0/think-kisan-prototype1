@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="dashboard.css">
+  <title>Hardware val manuplation</title>
+  <style>
+    .fb {
+        background-color: rgb(176, 231, 241);
+        font-size: 26px;
+        font-weight: bold;
+        display: flex;
+        flex-direction: column;
+        flex-wrap: wrap;
+        position: relative;
+        justify-content: center;
+        align-items: center;
+        gap:10px;
+        height: 100vh;
+    }
+    button {
+        background-color: aqua;
+        padding: 10px;
+        border-radius: 10%;
+        font-weight: bold;
+        font-size: 20px;
+    }
+    input  {
+        width: 150px;
+        height: 40px;
+        font-size: 24px;
+        background-color: rgb(192, 253, 253);
+        font-weight: bold;
+    }
+    
+  </style>
+</head>
+<body>
+    <div class="fb">
+        <div id="value_now"></div><br>
+        <label>Enter Moisture : </label>
+        <input type="number" id="set_moisture_realtime" placeholder="realtime">
+        <button onclick="set_moisture_in_firebase()">Set Moisture</button>
+    </div>
+
+    
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getDatabase, ref, onValue, set, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBfUMZZyYlA7WcpwlLeM3KbtxhBsmJ_3N8",
+    authDomain: "thinksong-b4086.firebaseapp.com",
+    databaseURL: "https://thinksong-b4086-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "thinksong-b4086",
+    storageBucket: "thinksong-b4086.appspot.com",
+    messagingSenderId: "68241922299",
+    appId: "1:68241922299:web:a0d329ee7c3e741f18b85e",
+    measurementId: "G-1QJ8HTK9N9"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+  const realtimeDb = getDatabase(app); 
+
+  const moistureRealtimeRef = ref(realtimeDb, "moisture_realtime/moisture_realtime");
+  const set_moisture_realtime = document.getElementById("set_moisture_realtime");
+  const value_now = document.getElementById("value_now");
+
+  // Live updates
+  onValue(moistureRealtimeRef, (snap) => {
+    const current = parseFloat(snap.val()) || 0;
+    value_now.textContent = `Current Moisture: ${current}%`;
+  });
+
+  // Set moisture value
+  window.set_moisture_in_firebase = async function () {
+    const newValue = parseFloat(set_moisture_realtime.value);
+    if (!isNaN(newValue)) {
+      await set(moistureRealtimeRef, newValue);
+    }
+  };
+</script>
+
+</body>
+</html>
