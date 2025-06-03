@@ -37,6 +37,7 @@ const txBattPercRef       = ref(realtimeDb, "tx_Battery/tx_percent");
 const txBattVoltRef       = ref(realtimeDb, "tx_Battery/tx_voltage");
 const rxBattPercRef       = ref(realtimeDb, "receiver_battery/reciver_percentage");
 const rxBattVoltRef       = ref(realtimeDb, "receiver_battery/receiver_voltage");
+const device_status       = ref(realtimeDb, "device_status/status")
 
 
 // ================== 2) Cache DOM Nodes ==================
@@ -54,6 +55,7 @@ const txBattDispEl         = document.getElementById("transmeterbattery");
 const txBattVoltEl         = document.getElementById("transmeterbattery_voltage");
 const rxBattDispEl         = document.getElementById("receiverbatter");
 const rxBattVoltEl         = document.getElementById("receiverbatter_voltage");
+const device_status_indic  = document.getElementById("device_status");
 
 
 // ================== 3) Helper: update relay based on current & setpoint ==================
@@ -90,6 +92,16 @@ onValue(moistureSetRef, snap => {
   const val = parseFloat(snap.val()) || 0;
   slider.value = val;
   sliderDisplaySpan.textContent = `Selected Moisture Value: ${val}`;
+});
+
+// ==================== device status ===========================
+onValue(device_status, snap => {
+  if(snap.val() == "ON"){
+    device_status_indic.style.backgroundColor = "green";
+  }
+  if(snap.val() == "OFF"){
+    device_status_indic.style.backgroundColor = "red";
+  }
 });
 
 
@@ -162,7 +174,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   const relayOn = relaySnap.exists() && relaySnap.val() === "on";
   const setVal = parseFloat(setSnap.val()) || 0;
-  const current = parseFloat(moistureSnap.val()) || 0;
+  // const current = parseFloat(moistureSnap.val()) || 0;
 
   manualToggle.checked = relayOn || setVal > 0;
 
@@ -176,7 +188,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 // console.log("currentval", current);
 // console.log("setval", setVal);
   if (manualToggle.checked && automaticToggle.checked) {
-    set(relayStatusRef, current <= setVal ? "on" : "off");
+      onValue(moistureRealtimeRef, (snap) => {
+      const current = parseFloat(snap.val()) || 0;
+      set(relayStatusRef, current <= setVal ? "on" : "off");
+      })
   }
 
   manualToggle.addEventListener("change", handleToggle);
