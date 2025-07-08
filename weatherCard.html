@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Weather App</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #eef6fd;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      max-width: 400px;
+      margin: auto;
+      background: #fff;
+      border-radius: 15px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .city, .region, .time, .temp, .condition {
+      text-align: center;
+    }
+    .city {
+      font-size: 28px;
+      font-weight: 700;
+    }
+    .region {
+      font-size: 18px;
+      color: #666;
+    }
+    .time {
+      margin-bottom: 10px;
+      color: #444;
+    }
+    .temp {
+      font-size: 50px;
+      font-weight: bold;
+      color: #333;
+    }
+    .condition {
+      font-size: 20px;
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .infoRow {
+      display: flex;
+      justify-content: space-between;
+      margin: 5px 0;
+    }
+    .infoRow span {
+      font-size: 16px;
+    }
+    .error {
+      color: red;
+      text-align: center;
+      margin-bottom: 10px;
+    }
+    .city-buttons button {
+      margin: 5px;
+      padding: 6px 10px;
+      border: none;
+      background: #007BFF;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="error" class="error"></div>
+    <div class="city-buttons" id="cityButtons" style="display:none;"></div>
+    <div id="weatherInfo" style="display:none;">
+      <h2 class="city" id="city"></h2>
+      <p class="region" id="region"></p>
+      <p class="time" id="time"></p>
+      <div style="text-align:center;"><img id="icon" src="" alt="" /></div>
+      <p class="temp" id="temp"></p>
+      <p class="condition" id="condition"></p>
+      <div id="infoBox"></div>
+    </div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+  <script>
+    const WEATHER_API_KEY = "76142871663349e9a2e92755251906";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBfUMZZyYlA7WcpwlLeM3KbtxhBsmJ_3N8",
+  authDomain: "thinksong-b4086.firebaseapp.com",
+  databaseURL: "https://thinksong-b4086-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "thinksong-b4086",
+  storageBucket: "thinksong-b4086.firebasestorage.app",
+  messagingSenderId: "68241922299",
+  appId: "1:68241922299:web:a0d329ee7c3e741f18b85e",
+  measurementId: "G-1QJ8HTK9N9"
+};
+
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+
+    const fetchWeather = async (city) => {
+      try {
+        document.getElementById("weatherInfo").style.display = "none";
+        document.getElementById("error").textContent = "";
+        const res = await fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${city}`);
+        const data = await res.json();
+
+        document.getElementById("city").textContent = data.location.name;
+        document.getElementById("region").textContent = data.location.region;
+        document.getElementById("time").textContent = `Local Time: ${data.location.localtime}`;
+        document.getElementById("icon").src = `https:${data.current.condition.icon}`;
+        document.getElementById("condition").textContent = data.current.condition.text;
+        document.getElementById("temp").textContent = `${data.current.temp_c}°C`;
+
+        const info = {
+          "Feels Like": `${data.current.feelslike_c}°C`,
+          "Humidity": `${data.current.humidity}%`,
+          "Wind Speed": `${data.current.wind_kph} km/h`,
+          "UV Index": data.current.uv,
+          "Pressure": `${data.current.pressure_mb} mb`,
+          "Visibility": `${data.current.vis_km} km`,
+          "Cloud": `${data.current.cloud}%`,
+          "Daytime": data.current.is_day ? 'Yes' : 'No',
+        };
+
+        const infoBox = document.getElementById("infoBox");
+        infoBox.innerHTML = '';
+        for (const [label, value] of Object.entries(info)) {
+          const row = document.createElement("div");
+          row.className = "infoRow";
+          row.innerHTML = `<span>${label}</span><span>${value}</span>`;
+          infoBox.appendChild(row);
+        }
+
+        await db.ref("Device1/weatherdata/temperature").set(data.current.temp_c);
+        await db.ref("Device1/weatherdata/wind").set(data.current.wind_kph);
+        await db.ref("Device1/weatherdata/humidity").set(data.current.humidity);
+        await db.ref("Device1/weatherdata/icon").set(`https:${data.current.condition.icon}`);
+
+        document.getElementById("weatherInfo").style.display = "block";
+      } catch (err) {
+        document.getElementById("error").textContent = "Failed to fetch weather.";
+      }
+    };
+
+    // Geolocation fallback
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(async (position) => {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        await fetchWeather(`${lat},${lon}`);
+      }, () => {
+        showCityOptions();
+      });
+    } else {
+      showCityOptions();
+    }
+
+    function showCityOptions() {
+      document.getElementById("error").textContent = "Could not get location. Choose a city:";
+      const cities = ['Bhimavaram', 'Tadepalligudem', 'Hyderabad', 'Pentapadu'];
+      const container = document.getElementById("cityButtons");
+      container.innerHTML = '';
+      cities.forEach(city => {
+        const btn = document.createElement("button");
+        btn.textContent = city;
+        btn.onclick = () => fetchWeather(city);
+        container.appendChild(btn);
+      });
+      container.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
