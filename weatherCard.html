@@ -108,6 +108,7 @@ const firebaseConfig = {
         document.getElementById("error").textContent = "";
         const res = await fetch(`https://api.weatherapi.com/v1/current.json?key=${WEATHER_API_KEY}&q=${city}`);
         const data = await res.json();
+        
 
         document.getElementById("city").textContent = data.location.name;
         document.getElementById("region").textContent = data.location.region;
@@ -136,10 +137,10 @@ const firebaseConfig = {
           infoBox.appendChild(row);
         }
 
-        await db.ref("Device1/weatherdata/temperature").set(data.current.temp_c);
-        await db.ref("Device1/weatherdata/wind").set(data.current.wind_kph);
-        await db.ref("Device1/weatherdata/humidity").set(data.current.humidity);
-        await db.ref("Device1/weatherdata/icon").set(`https:${data.current.condition.icon}`);
+        await db.ref("weatherApi/weatherdata/temperature").set(data.current.temp_c);
+        await db.ref("weatherApi/weatherdata/wind").set(data.current.wind_kph);
+        await db.ref("weatherApi/weatherdata/humidity").set(data.current.humidity);
+        await db.ref("weatherApi/weatherdata/icon").set(`https:${data.current.condition.icon}`);
 
         document.getElementById("weatherInfo").style.display = "block";
       } catch (err) {
