@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sensor Toggle</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding-top: 50px;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+
+    .status {
+      margin-top: 20px;
+      font-size: 20px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Toggle Sensor Status</h2>
+  <label class="switch">
+    <input type="checkbox" id="toggleSensor">
+    <span class="slider"></span>
+  </label>
+  <div class="status" id="statusText">Loading...</div>
+
+  <script type="module">
+    // Firebase Config (Replace with your values)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+    const firebaseConfig = {
+       apiKey: "AIzaSyBfUMZZyYlA7WcpwlLeM3KbtxhBsmJ_3N8",
+  authDomain: "thinksong-b4086.firebaseapp.com",
+  databaseURL: "https://thinksong-b4086-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "thinksong-b4086",
+  storageBucket: "thinksong-b4086.firebasestorage.app",
+  messagingSenderId: "68241922299",
+  appId: "1:68241922299:web:a0d329ee7c3e741f18b85e",
+  measurementId: "G-1QJ8HTK9N9"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const sensorRef = ref(db, 'weatherApi/weatherdata/sensorState');
+
+    const toggle = document.getElementById('toggleSensor');
+    const statusText = document.getElementById('statusText');
+
+    // Listen for realtime changes
+    onValue(sensorRef, (snapshot) => {
+      const state = snapshot.val();
+      toggle.checked = (state === "online");
+      statusText.textContent = `Sensor is ${state}`;
+    });
+
+    // Handle toggle switch
+    toggle.addEventListener('change', () => {
+      const newState = toggle.checked ? "online" : "offline";
+      set(sensorRef, newState);
+    });
+  </script>
+</body>
+</html>
